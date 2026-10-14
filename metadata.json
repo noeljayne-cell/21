@@ -1,0 +1,6 @@
+{
+  "name": "The Cosmos: Derelict's Hub",
+  "description": "Tablet companion app for space tabletop games inspired by Escape Velocity, featuring interactive hyperspace star map, in-system navigation, and complete planetary spaceports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
