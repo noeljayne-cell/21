@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
-import { PlayerState, StarSystem, TabletopLogEntry } from '../types/game';
-import { getSystemInterestRate } from '../data/galaxyData';
+import { PlayerState, StarSystem, LogEntry } from '../types/game';
 import { formatGameDate } from '../utils/dateUtils';
+import { getSystemInterestRate } from '../data/galaxyData';
 import { sound } from '../audio/soundFx';
-import { 
-  X, 
-  Dices, 
-  Calendar, 
-  Sparkles, 
-  BookOpen, 
-  RotateCcw, 
-  ShieldAlert, 
-  History, 
-  Plus, 
+import {
+  Dices,
+  Sparkles,
+  History,
+  X,
+  Plus,
   Minus,
-  Check,
-  AlertTriangle,
+  RefreshCw,
   Clock,
   Compass,
-  Percent
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 
 interface TabletopCompanionDrawerProps {
@@ -26,10 +22,10 @@ interface TabletopCompanionDrawerProps {
   onClose: () => void;
   player: PlayerState;
   currentSystem: StarSystem;
-  onAdvanceTurn: (days: number) => void;
+  onAdvanceTurn?: (days: number) => void;
+  logEntries: LogEntry[];
+  onAddLog: (entry: LogEntry) => void;
   onUpdateNotes: (notes: string) => void;
-  logEntries: TabletopLogEntry[];
-  onAddLog: (entry: TabletopLogEntry) => void;
 }
 
 export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = ({
@@ -37,10 +33,9 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
   onClose,
   player,
   currentSystem,
-  onAdvanceTurn,
-  onUpdateNotes,
   logEntries,
   onAddLog,
+  onUpdateNotes,
 }) => {
   const [activeTab, setActiveTab] = useState<'dice' | 'turn' | 'encounters' | 'notes'>('dice');
 
@@ -164,20 +159,20 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200 select-none">
-      <div className="w-full max-w-md h-full bg-slate-950 border-l border-cyan-900/40 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto no-scrollbar">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 select-none">
+      <div className="w-full max-w-md h-full ev-panel border-l-2 border-slate-700 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto no-scrollbar">
         <div className="space-y-5">
           {/* Top Drawer Title & Close Button */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 bg-amber-500/10 rounded border border-amber-500/30 text-amber-400">
-                <Dices className="w-4 h-4" />
+          <div className="flex items-center justify-between pb-3.5 border-b border-slate-700/80">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg border border-amber-500/50 text-amber-400">
+                <Dices className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block font-bold">
                   TABLETOP COMPANION TOOLKIT
                 </span>
-                <h2 className="text-base font-display font-bold text-slate-100 uppercase tracking-wide">
+                <h2 className="text-base sm:text-lg font-display font-black text-slate-100 uppercase tracking-wide">
                   Tabletop Game Bridge
                 </h2>
               </div>
@@ -187,21 +182,21 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                 sound.playClick(500);
                 onClose();
               }}
-              className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-900 rounded-lg transition-colors cursor-pointer"
+              className="ev-btn p-2 text-slate-300 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Sub-Tool Navigation Tabs */}
-          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-900 rounded-lg text-xs font-mono">
+          {/* Sub-Tool Navigation Tabs (EV Beveled Switcher) */}
+          <div className="grid grid-cols-4 gap-1.5 p-1 ev-panel-inset rounded-lg text-xs font-mono font-bold">
             <button
               onClick={() => {
                 sound.playMenu();
                 setActiveTab('dice');
               }}
-              className={`py-1.5 rounded transition-colors text-center cursor-pointer ${
-                activeTab === 'dice' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+              className={`py-2 rounded transition-colors text-center cursor-pointer uppercase ${
+                activeTab === 'dice' ? 'ev-btn-amber text-slate-950 font-black' : 'text-slate-300 hover:text-white'
               }`}
             >
               Dice
@@ -211,8 +206,8 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                 sound.playMenu();
                 setActiveTab('turn');
               }}
-              className={`py-1.5 rounded transition-colors text-center cursor-pointer ${
-                activeTab === 'turn' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+              className={`py-2 rounded transition-colors text-center cursor-pointer uppercase ${
+                activeTab === 'turn' ? 'ev-btn-amber text-slate-950 font-black' : 'text-slate-300 hover:text-white'
               }`}
             >
               Timeline
@@ -222,8 +217,8 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                 sound.playMenu();
                 setActiveTab('encounters');
               }}
-              className={`py-1.5 rounded transition-colors text-center cursor-pointer ${
-                activeTab === 'encounters' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+              className={`py-2 rounded transition-colors text-center cursor-pointer uppercase ${
+                activeTab === 'encounters' ? 'ev-btn-amber text-slate-950 font-black' : 'text-slate-300 hover:text-white'
               }`}
             >
               Encounters
@@ -233,8 +228,8 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                 sound.playMenu();
                 setActiveTab('notes');
               }}
-              className={`py-1.5 rounded transition-colors text-center cursor-pointer ${
-                activeTab === 'notes' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+              className={`py-2 rounded transition-colors text-center cursor-pointer uppercase ${
+                activeTab === 'notes' ? 'ev-btn-amber text-slate-950 font-black' : 'text-slate-300 hover:text-white'
               }`}
             >
               Notes
@@ -245,28 +240,28 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
           {activeTab === 'dice' && (
             <div className="space-y-4">
               {/* Modifier Adjustment */}
-              <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800 p-2.5 rounded text-xs font-mono">
-                <span className="text-slate-400">ROLL MODIFIER:</span>
+              <div className="flex items-center justify-between ev-panel-inset p-3 rounded-lg text-xs font-mono">
+                <span className="text-slate-300 font-bold uppercase">ROLL MODIFIER:</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setModifier(m => m - 1)}
-                    className="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-bold flex items-center justify-center cursor-pointer"
+                    className="w-7 h-7 ev-btn rounded text-slate-100 font-bold flex items-center justify-center cursor-pointer text-sm"
                   >
                     -
                   </button>
-                  <span className="w-8 text-center font-bold text-amber-300 tabular-nums">
+                  <span className="w-10 text-center font-black text-amber-300 tabular-nums text-sm">
                     {modifier > 0 ? `+${modifier}` : modifier}
                   </span>
                   <button
                     onClick={() => setModifier(m => m + 1)}
-                    className="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-bold flex items-center justify-center cursor-pointer"
+                    className="w-7 h-7 ev-btn rounded text-slate-100 font-bold flex items-center justify-center cursor-pointer text-sm"
                   >
                     +
                   </button>
                   {modifier !== 0 && (
                     <button
                       onClick={() => setModifier(0)}
-                      className="text-[10px] text-slate-500 hover:text-slate-300 ml-1 cursor-pointer"
+                      className="text-xs font-mono text-cyan-400 hover:text-cyan-300 ml-1.5 cursor-pointer underline font-bold"
                     >
                       Reset
                     </button>
@@ -289,7 +284,7 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                   <button
                     key={d.label}
                     onClick={() => rollDice(d.count, d.sides, d.label)}
-                    className="py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 rounded text-center text-slate-100 font-bold transition-all shadow-sm cursor-pointer"
+                    className="py-3 ev-btn rounded-lg text-center text-slate-100 font-bold transition-all shadow-sm cursor-pointer text-sm"
                   >
                     {d.label}
                   </button>
@@ -298,14 +293,14 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
 
               {/* Latest Roll Output */}
               {lastRoll && (
-                <div className="p-4 bg-slate-900 border border-amber-500/40 rounded-lg text-center space-y-1">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">
+                <div className="p-4 ev-panel-inset rounded-lg text-center space-y-1.5 border border-amber-500/50">
+                  <span className="text-xs font-mono text-cyan-300 block uppercase font-bold tracking-wider">
                     LATEST ROLL ({lastRoll.diceType})
                   </span>
-                  <div className="text-3xl font-display font-bold text-amber-400 tabular-nums">
+                  <div className="text-4xl font-display font-black text-amber-400 tabular-nums">
                     {lastRoll.total}
                   </div>
-                  <div className="text-xs font-mono text-slate-400">
+                  <div className="text-xs font-mono text-slate-300">
                     Dice: [{lastRoll.rolls.join(', ')}]
                     {lastRoll.modifier !== 0 && ` Modifier: ${lastRoll.modifier > 0 ? `+${lastRoll.modifier}` : lastRoll.modifier}`}
                   </div>
@@ -317,70 +312,70 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
           {/* TAB 2: AUTOMATIC TIMELINE & CHRONOLOGY MONITOR */}
           {activeTab === 'turn' && (
             <div className="space-y-4">
-              <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-lg space-y-3">
-                <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                  <span className="text-[10px] uppercase tracking-wider block text-cyan-400">
+              <div className="ev-panel p-4 rounded-xl space-y-3.5 shadow-md">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="uppercase tracking-wider block text-cyan-300 font-bold">
                     AUTOMATIC CAMPAIGN TIMELINE
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50 text-xs font-bold">
                     HYPERDRIVE LINKED
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
                   <div>
-                    <span className="text-xl sm:text-2xl font-display font-bold text-cyan-300 tracking-wide block">
+                    <span className="text-xl sm:text-2xl font-display font-black text-cyan-300 tracking-wide block">
                       {formatGameDate(player.stardate)}
                     </span>
-                    <span className="text-xs font-mono text-slate-400 block">Campaign Day {Math.floor(player.stardate) + 1}</span>
+                    <span className="text-xs font-mono text-slate-300 block font-semibold">Campaign Day {Math.floor(player.stardate) + 1}</span>
                   </div>
                   <div className="text-right text-xs font-mono">
-                    <span className="text-slate-400 block">Active Escorts: {player.escorts.length}</span>
-                    <span className="text-amber-400 block font-semibold">
+                    <span className="text-slate-300 block">Active Escorts: {player.escorts.length}</span>
+                    <span className="text-amber-300 block font-bold">
                       Wages: -{player.escorts.reduce((a, b) => a + b.dailyWage, 0)} Cr / Jump
                     </span>
                   </div>
                 </div>
 
                 {/* System-specific loan interest rate */}
-                <div className="p-3 bg-slate-950 rounded border border-slate-800 space-y-1.5 text-xs font-mono">
+                <div className="p-3.5 ev-panel-inset rounded-lg space-y-2 text-xs font-mono">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Local System Loan Tariff:</span>
-                    <span className="text-amber-300 font-bold">
+                    <span className="text-slate-300 font-bold">Local System Loan Tariff:</span>
+                    <span className="text-amber-300 font-bold text-sm">
                       {getSystemInterestRate(currentSystem).toFixed(1)}% Variable APR
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Jurisdiction & Security:</span>
-                    <span className="text-slate-300">{currentSystem.name} ({currentSystem.security})</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Jurisdiction &amp; Security:</span>
+                    <span className="text-slate-200 font-semibold">{currentSystem.name} ({currentSystem.security})</span>
                   </div>
                   {player.debt > 0 && (
-                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
-                      <span className="text-rose-400">Outstanding Debt:</span>
-                      <span className="text-rose-300 font-bold">
+                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-700/80">
+                      <span className="text-rose-400 font-bold">Outstanding Debt:</span>
+                      <span className="text-rose-300 font-bold text-sm">
                         {player.debt.toLocaleString()} Cr (+{Math.max(1, Math.round(player.debt * (getSystemInterestRate(currentSystem) / 100 / 10))).toLocaleString()} Cr / Jump)
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-2.5 bg-cyan-950/30 border border-cyan-800/40 rounded text-xs text-cyan-200/90 font-sans leading-relaxed">
+                <div className="p-3 ev-panel-inset rounded-lg text-xs sm:text-sm text-cyan-200 font-sans leading-relaxed">
                   Time advances <strong>automatically</strong> with each hyperspace transit (+1 Day per jump). Navigation computers automatically deduct crew wages and accrue system-variable loan interest (5%–10% based on security).
                 </div>
               </div>
 
               {/* Recent Timeline Logs */}
               <div className="space-y-2">
-                <span className="text-[10px] font-mono uppercase text-slate-400 tracking-wider block">
-                  RECENT FLIGHT & TRANSIT LOGS
+                <span className="text-xs font-mono uppercase text-slate-300 tracking-wider block font-bold">
+                  RECENT FLIGHT &amp; TRANSIT LOGS
                 </span>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar font-mono text-xs">
                   {logEntries
                     .filter((e) => e.type === 'jump' || e.type === 'land')
                     .slice(0, 5)
                     .map((entry) => (
-                      <div key={entry.id} className="p-2 bg-slate-900/60 rounded border border-slate-800/80 text-[11px] text-slate-300">
-                        <span className="text-cyan-400 mr-2">[{formatGameDate(entry.stardate)}]</span>
+                      <div key={entry.id} className="p-2.5 ev-panel-inset rounded-lg text-xs text-slate-200">
+                        <span className="text-cyan-400 font-bold mr-2">[{formatGameDate(entry.stardate)}]</span>
                         {entry.text}
                       </div>
                     ))}
@@ -394,27 +389,27 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
             <div className="space-y-4">
               <button
                 onClick={generateSpaceEncounter}
-                className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-slate-950 font-display font-bold text-xs uppercase rounded transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 ev-btn-amber text-xs sm:text-sm uppercase rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-lg"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Roll Space Encounter ({currentSystem.security} Sec)</span>
               </button>
 
               {currentEncounter && (
-                <div className="bg-slate-900/80 border border-amber-500/40 p-4 rounded-lg space-y-2.5 text-xs">
+                <div className="ev-panel p-4 rounded-xl space-y-3 text-xs border border-amber-500/60 shadow-xl">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-display font-bold text-amber-300 text-sm uppercase">
+                    <h4 className="font-display font-black text-amber-300 text-sm sm:text-base uppercase">
                       {currentEncounter.title}
                     </h4>
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                    <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-600">
                       {currentEncounter.difficulty}
                     </span>
                   </div>
-                  <p className="text-slate-300 font-sans leading-relaxed">
+                  <p className="text-slate-100 font-sans text-xs sm:text-sm leading-relaxed">
                     {currentEncounter.description}
                   </p>
-                  <div className="p-2 bg-slate-950 rounded border border-slate-800 font-mono text-[11px] text-cyan-300">
-                    <strong>TABLETOP RESOLUTION:</strong> {currentEncounter.tabletopCheck}
+                  <div className="p-3 ev-panel-inset rounded-lg font-mono text-xs text-cyan-300">
+                    <strong className="text-amber-300">TABLETOP RESOLUTION:</strong> {currentEncounter.tabletopCheck}
                   </div>
                 </div>
               )}
@@ -424,7 +419,7 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
           {/* TAB 4: GM & CAMPAIGN NOTES */}
           {activeTab === 'notes' && (
             <div className="space-y-3">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+              <span className="text-xs font-mono text-slate-300 uppercase tracking-wider block font-bold">
                 TABLETOP CAMPAIGN SCRATCHPAD
               </span>
               <textarea
@@ -432,14 +427,14 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
                 onChange={(e) => setNotesText(e.target.value)}
                 placeholder="Record session notes, GM clues, secret wormholes, player debt agreements..."
                 rows={8}
-                className="w-full bg-slate-900 border border-slate-800 rounded p-3 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 leading-relaxed resize-none"
+                className="w-full ev-panel-inset rounded-lg p-3 text-xs sm:text-sm font-mono text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-500 leading-relaxed resize-none"
               />
               <button
                 onClick={() => {
                   sound.playClick(600);
                   onUpdateNotes(notesText);
                 }}
-                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs font-mono font-semibold text-cyan-300 rounded border border-slate-700 cursor-pointer"
+                className="w-full py-2.5 ev-btn-cyan text-xs font-mono font-bold uppercase rounded cursor-pointer"
               >
                 Save Notes
               </button>
@@ -447,15 +442,15 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
           )}
 
           {/* Campaign Action Log History */}
-          <div className="pt-3 border-t border-slate-800 space-y-2">
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <History className="w-3 h-3 text-slate-500" /> Session Event History
+          <div className="pt-3 border-t border-slate-700/80 space-y-2">
+            <span className="text-xs font-mono text-slate-300 uppercase tracking-wider flex items-center gap-1.5 font-bold">
+              <History className="w-4 h-4 text-cyan-400" /> Session Event History
             </span>
-            <div className="max-h-36 overflow-y-auto no-scrollbar space-y-1 text-[11px] font-mono">
+            <div className="max-h-36 overflow-y-auto no-scrollbar space-y-1.5 text-xs font-mono">
               {logEntries.slice(0, 8).map((log) => (
-                <div key={log.id} className="text-slate-400 py-0.5 border-b border-slate-900 flex justify-between">
-                  <span className="truncate max-w-[280px]">{log.text}</span>
-                  <span className="text-slate-500 shrink-0 ml-2">{formatGameDate(log.stardate)}</span>
+                <div key={log.id} className="text-slate-300 py-1 border-b border-slate-800/80 flex justify-between">
+                  <span className="truncate max-w-[270px]">{log.text}</span>
+                  <span className="text-slate-400 shrink-0 ml-2">{formatGameDate(log.stardate)}</span>
                 </div>
               ))}
             </div>
@@ -463,8 +458,8 @@ export const TabletopCompanionDrawer: React.FC<TabletopCompanionDrawerProps> = (
         </div>
 
         {/* Footer */}
-        <div className="pt-3 border-t border-slate-800 text-center text-[10px] font-mono text-slate-500">
-          Starfall Nav · Companion OS
+        <div className="pt-3 border-t border-slate-700/80 text-center text-xs font-mono text-slate-400">
+          Escape Velocity Tabletop Companion OS
         </div>
       </div>
     </div>

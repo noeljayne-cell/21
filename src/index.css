@@ -1,12 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Space Grotesk', 'Rajdhani', 'Chakra Petch', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-display: 'Chakra Petch', 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Orbitron', 'Chakra Petch', 'Space Grotesk', sans-serif;
 }
 
-/* Custom scrollbar hiding and styles for tablet */
+/* Custom scrollbar styled to match 90s Escape Velocity tactical consoles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #05070c;
+  border-left: 1px solid #141c2b;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
+  border-color: #38bdf8;
+}
+
+/* Custom scrollbar hiding utility when explicitly requested */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -19,3 +38,290 @@
 button, input, select, textarea {
   touch-action: manipulation;
 }
+
+/* ==========================================================================
+   AUTHENTIC ESCAPE VELOCITY RETRO-TACTICAL DESIGN SYSTEM
+   Deep near-black space environment, darkened foreground panels, and space typography
+   ========================================================================== */
+
+/* Darkened Classic EV Beveled Metal Window / Foreground Panel */
+.ev-panel {
+  background: linear-gradient(180deg, rgba(10, 15, 24, 0.98) 0%, rgba(5, 8, 14, 0.99) 100%);
+  border-top: 1px solid #2d3b4e;
+  border-left: 1px solid #1a2433;
+  border-right: 1px solid #080c14;
+  border-bottom: 2px solid #010307;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Inset Computer Screen / Readout Panel (Dark recessed monitor) */
+.ev-panel-inset {
+  background: rgba(3, 5, 10, 0.95);
+  border-top: 2px solid #010307;
+  border-left: 2px solid #060911;
+  border-right: 1px solid #131c2b;
+  border-bottom: 1px solid #1e293b;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.92);
+}
+
+/* Classic EV Raised 3D Beveled Push Button */
+.ev-btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: linear-gradient(180deg, #2d3748 0%, #171f2d 100%);
+  border-top: 1px solid #4a5568;
+  border-left: 1px solid #2d3748;
+  border-right: 1px solid #090d16;
+  border-bottom: 2px solid #020409;
+  color: #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+.ev-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3d4a60 0%, #243042 100%);
+  color: #ffffff;
+  border-top-color: #718096;
+  box-shadow: 0 0 10px rgba(113, 128, 150, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.ev-btn:active:not(:disabled) {
+  background: linear-gradient(180deg, #121824 0%, #070b12 100%);
+  border-top: 2px solid #020409;
+  border-left: 1px solid #090d16;
+  border-right: 1px solid #2d3748;
+  border-bottom: 1px solid #4a5568;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+  transform: translateY(1px);
+}
+.ev-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+/* EV Tactical Amber Button */
+.ev-btn-amber {
+  background: linear-gradient(180deg, #d97706 0%, #9a3412 100%);
+  border-top: 1px solid #fbbf24;
+  border-left: 1px solid #f59e0b;
+  border-right: 1px solid #6c2e0b;
+  border-bottom: 2px solid #3c1404;
+  color: #020617;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(180, 83, 9, 0.35), inset 0 1px 0 rgba(254, 243, 199, 0.3);
+}
+.ev-btn-amber:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+  color: #000000;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.ev-btn-amber:active:not(:disabled) {
+  background: linear-gradient(180deg, #7c2d12 0%, #431407 100%);
+  border-top: 2px solid #3c1404;
+  border-left: 1px solid #6c2e0b;
+  border-right: 1px solid #f59e0b;
+  border-bottom: 1px solid #fbbf24;
+  color: #fef3c7;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+/* EV Subspace Cyan Button */
+.ev-btn-cyan {
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+  border-top: 1px solid #38bdf8;
+  border-left: 1px solid #0ea5e9;
+  border-right: 1px solid #0c4a6e;
+  border-bottom: 2px solid #082f49;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35), inset 0 1px 0 rgba(224, 242, 254, 0.25);
+}
+.ev-btn-cyan:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.ev-btn-cyan:active:not(:disabled) {
+  background: linear-gradient(180deg, #075985 0%, #0c4a6e 100%);
+  border-top: 2px solid #082f49;
+  border-left: 1px solid #0c4a6e;
+  border-right: 1px solid #0ea5e9;
+  border-bottom: 1px solid #38bdf8;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* EV Navigational Emerald Button */
+.ev-btn-emerald {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%);
+  border-top: 1px solid #34d399;
+  border-left: 1px solid #10b981;
+  border-right: 1px solid #064e3b;
+  border-bottom: 2px solid #022c22;
+  color: #020617;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35), inset 0 1px 0 rgba(209, 250, 229, 0.3);
+}
+.ev-btn-emerald:hover:not(:disabled) {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #000000;
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.ev-btn-emerald:active:not(:disabled) {
+  background: linear-gradient(180deg, #065f46 0%, #064e3b 100%);
+  border-top: 2px solid #022c22;
+  border-left: 1px solid #064e3b;
+  border-right: 1px solid #10b981;
+  border-bottom: 1px solid #34d399;
+  color: #d1fae5;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* Classic EV Dual Pinstripe Titlebar (Darkened) */
+.ev-titlebar {
+  background: linear-gradient(180deg, #141c2a 0%, #080d16 100%);
+  border-bottom: 1px solid #243042;
+  position: relative;
+}
+.ev-titlebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Deep Near-Black Blue-Gray Spaceport Docking Environment */
+.ev-port-bg {
+  background-color: #050810;
+  background-image: radial-gradient(circle at 20% 20%, rgba(11, 16, 28, 0.85) 0%, #03050a 100%);
+}
+
+.ev-port-card {
+  background: linear-gradient(180deg, #0b101b 0%, #05080f 100%);
+  border-top: 1px solid #243042;
+  border-left: 1px solid #16202e;
+  border-right: 1px solid #080c14;
+  border-bottom: 2px solid #02040a;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.85);
+}
+
+/* Spaceport Terminal Lighter Grey Buttons with Crisp Space Typography */
+.ev-port-btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #526075 0%, #3b4759 100%);
+  border-top: 1px solid #718096;
+  border-left: 1px solid #526075;
+  border-right: 1px solid #283241;
+  border-bottom: 2px solid #131a24;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: all 0.12s ease-in-out;
+  cursor: pointer;
+  user-select: none;
+}
+.ev-port-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+  color: #ffffff;
+  border-top-color: #94a3b8;
+  box-shadow: 0 0 12px rgba(148, 163, 184, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.ev-port-btn:active:not(:disabled),
+.ev-port-btn-active {
+  background: linear-gradient(180deg, #1b2434 0%, #0d131f 100%) !important;
+  border-top: 2px solid #070b12 !important;
+  border-left: 1px solid #0f1724 !important;
+  border-right: 1px solid #3b4759 !important;
+  border-bottom: 1px solid #38bdf8 !important;
+  color: #38bdf8 !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 14px rgba(56, 189, 248, 0.35) !important;
+}
+
+/* ==========================================================================
+   GLOBAL PROCEDURAL COSMIC STARFIELD
+   Crisp pinpoint stars and twinkling cosmic dust
+   ========================================================================== */
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes starTwinkleAlt {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.95; }
+}
+
+.cosmic-starfield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stars-layer-1 {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 24px 36px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 120px 84px, #cffafe, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 240px 180px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 360px 110px, #fef08a, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 480px 290px, #38bdf8, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 590px 140px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 710px 380px, #e2e8f0, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 820px 60px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 940px 220px, #93c5fd, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1060px 340px, #fef9c3, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 1180px 170px, #38bdf8, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1320px 420px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1450px 90px, #a5f3fc, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 800px 550px;
+  animation: starTwinkle 6s ease-in-out infinite;
+}
+
+.stars-layer-2 {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(1.5px 1.5px at 70px 150px, #38bdf8, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 190px 320px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 310px 70px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 430px 240px, #fef08a, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 550px 410px, #67e8f9, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 670px 190px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 790px 90px, #93c5fd, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 910px 310px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1030px 120px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 1150px 450px, #fef08a, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 1270px 280px, #38bdf8, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 1390px 160px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 650px 480px;
+  animation: starTwinkleAlt 8s ease-in-out infinite;
+}
+
+/* User Text Editing Highlight Styles */
+[contenteditable="true"], .ev-user-editing {
+  outline: 1.5px dashed rgba(245, 158, 11, 0.45);
+  outline-offset: 3px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  cursor: text;
+}
+[contenteditable="true"]:hover, .ev-user-editing:hover {
+  outline: 1.5px dashed rgba(245, 158, 11, 0.9);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+[contenteditable="true"]:focus, .ev-user-editing:focus {
+  outline: 2px solid #f59e0b;
+  background-color: rgba(245, 158, 11, 0.12);
+}
+

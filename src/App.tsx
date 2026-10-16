@@ -12,6 +12,7 @@ import {
 } from './types/game';
 import { STAR_SYSTEMS, INITIAL_PLAYER_STATE, getSystemInterestRate, SHIPS, OUTFITS } from './data/galaxyData';
 import { TopNav } from './components/TopNav';
+import { TextEditorToolbar } from './components/TextEditorToolbar';
 import { GalaxyMap } from './components/GalaxyMap';
 import { SystemView } from './components/SystemView';
 import { PlanetaryLanding } from './components/PlanetaryLanding';
@@ -39,7 +40,35 @@ export default function App() {
 
   const [systems] = useState<StarSystem[]>(STAR_SYSTEMS);
   const [currentView, setCurrentView] = useState<'galaxy' | 'system' | 'planet' | 'ship'>('planet');
+  const [viewHistory, setViewHistory] = useState<Array<'galaxy' | 'system' | 'planet' | 'ship'>>([]);
+
+  const handleNavigateToView = (nextView: 'galaxy' | 'system' | 'planet' | 'ship') => {
+    if (nextView === currentView) return;
+    setViewHistory((prev) => [...prev, currentView]);
+    setCurrentView(nextView);
+  };
+
+  const handleNavigateBack = () => {
+    if (viewHistory.length > 0) {
+      const prevView = viewHistory[viewHistory.length - 1];
+      setViewHistory((prev) => prev.slice(0, -1));
+      setCurrentView(prevView);
+    } else {
+      // Intelligent contextual hierarchy fallback when history stack is empty
+      if (currentView === 'planet') {
+        setCurrentView('system');
+      } else if (currentView === 'system') {
+        setCurrentView('galaxy');
+      } else if (currentView === 'ship') {
+        setCurrentView(player.landedObjectId ? 'planet' : 'system');
+      } else if (currentView === 'galaxy') {
+        setCurrentView(player.landedObjectId ? 'planet' : 'system');
+      }
+    }
+  };
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [isGlobalEditMode, setIsGlobalEditMode] = useState<boolean>(false);
   const [mainMenuOpen, setMainMenuOpen] = useState<boolean>(false);
   const [tabletopDrawerOpen, setTabletopDrawerOpen] = useState<boolean>(false);
   const [logEntries, setLogEntries] = useState<TabletopLogEntry[]>([
@@ -152,7 +181,7 @@ export default function App() {
       text: `Docked at ${targetObject.name} (${currentSystem.name}). Surface facilities online.`,
     });
 
-    setCurrentView('planet');
+    handleNavigateToView('planet');
   };
 
   // Depart from Planet / Station into System Orbit
@@ -169,7 +198,7 @@ export default function App() {
       text: `Departed from ${landedObject?.name || 'surface'} into orbital pattern.`,
     });
 
-    setCurrentView('system');
+    handleNavigateToView('system');
   };
 
   // Transition to System View from Galaxy Map
@@ -177,7 +206,7 @@ export default function App() {
     if (sys.id !== player.currentSystemId) {
       handleJumpToSystem(sys);
     } else {
-      setCurrentView('system');
+      handleNavigateToView('system');
     }
   };
 
@@ -574,11 +603,17 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-screen w-full max-w-full bg-[#050810] text-slate-100 font-sans overflow-hidden select-none relative">
+      {/* Background Cosmic Starfield */}
+      <div className="cosmic-starfield z-0 opacity-80 pointer-events-none">
+        <div className="stars-layer-1" />
+        <div className="stars-layer-2" />
+      </div>
+
       {/* Top Universal Cockpit Navigation Dock */}
       <TopNav
         currentView={currentView}
-        setCurrentView={setCurrentView}
+        setCurrentView={handleNavigateToView}
         player={player}
         currentSystem={currentSystem}
         landedObject={landedObject}
@@ -586,10 +621,19 @@ export default function App() {
         setSoundEnabled={setSoundEnabled}
         onOpenTabletopTools={() => setTabletopDrawerOpen(true)}
         onOpenMainMenu={() => setMainMenuOpen(true)}
+        onNavigateBack={handleNavigateBack}
+        isGlobalEditMode={isGlobalEditMode}
+        onToggleGlobalEditMode={() => setIsGlobalEditMode((prev) => !prev)}
       />
 
-      {/* Main View Area */}
-      <main className="flex-1 w-full overflow-hidden relative pb-13 md:pb-0">
+      {/* Floating Design & Text Editor Toolbar */}
+      <TextEditorToolbar
+        isGlobalEditMode={isGlobalEditMode}
+        onToggleGlobalEditMode={() => setIsGlobalEditMode((prev) => !prev)}
+      />
+
+      {/* Main View Area - persistent bottom clearance for locked bottom dock on all screen sizes */}
+      <main className="flex-1 w-full overflow-hidden relative pb-13 sm:pb-14 z-10">
         {currentView === 'galaxy' && (
           <GalaxyMap
             systems={systems}
@@ -606,7 +650,7 @@ export default function App() {
             system={currentSystem}
             player={player}
             onLandOnObject={handleLandOnObject}
-            onReturnToGalaxyMap={() => setCurrentView('galaxy')}
+            onReturnToGalaxyMap={() => handleNavigateToView('galaxy')}
             onAppendNotes={handleAppendNotes}
           />
         )}
@@ -669,6 +713,7 @@ export default function App() {
         isOpen={mainMenuOpen}
         onClose={() => setMainMenuOpen(false)}
         player={player}
+        currentSystem={currentSystem}
         onStartNewGame={handleStartNewGame}
         onLoadGame={handleLoadGame}
         soundEnabled={soundEnabled}

@@ -70,7 +70,8 @@ export interface StellarObject {
   id: string;
   name: string;
   type: 'planet' | 'station' | 'moon';
-  orbitRadius: number; // distance from central star (pixels in system view)
+  parentId?: string; // Optional parent object ID if this body is a satellite (e.g. moon or orbital station)
+  orbitRadius: number; // distance from central star or parent object (pixels in system view)
   orbitSpeed: number; // orbital angular velocity
   initialAngle: number;
   size: number;
@@ -169,3 +170,5 @@ export interface TabletopLogEntry {
   type: 'jump' | 'land' | 'trade' | 'combat' | 'mission' | 'dice';
   text: string;
 }
+
+export type LogEntry = TabletopLogEntry;

@@ -3,58 +3,61 @@ import { PlayerState, StarSystem, Ship } from '../types/game';
 import { SHIPS, STAR_SYSTEMS } from '../data/galaxyData';
 import { formatGameDate } from '../utils/dateUtils';
 import { sound } from '../audio/soundFx';
-import { 
-  Play, 
-  RotateCcw, 
-  Save, 
-  FolderOpen, 
-  Settings, 
-  Volume2, 
-  VolumeX, 
-  Download, 
-  Upload, 
-  Trash2, 
-  Check, 
-  AlertTriangle, 
-  X, 
-  Compass, 
-  Sparkles, 
-  Rocket, 
-  DollarSign, 
-  ShieldAlert
+import {
+  Play,
+  Rocket,
+  FolderOpen,
+  Save,
+  Settings,
+  X,
+  Volume2,
+  VolumeX,
+  Trash2,
+  Download,
+  Upload,
+  ShieldAlert,
+  Compass,
+  Check,
+  Smartphone,
+  Apple,
+  ExternalLink,
+  Layers,
+  HelpCircle
 } from 'lucide-react';
 
-export interface SaveSlotData {
+interface MainMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  player: PlayerState;
+  currentSystem?: StarSystem;
+  onStartNewGame: (pilotName: string, shipName: string) => void;
+  onLoadGame: (savedState: PlayerState) => void;
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
+}
+
+interface SaveSlotData {
   id: string;
   name: string;
   savedAt: string;
   playerState: PlayerState;
 }
 
-interface MainMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-  player: PlayerState;
-  onStartNewGame: (pilotName: string, shipName: string) => void;
-  onLoadGame: (savedPlayer: PlayerState) => void;
-  soundEnabled: boolean;
-  setSoundEnabled: (enabled: boolean) => void;
-}
-
-const STORAGE_SLOTS_KEY = 'ev_starfall_save_slots_v1';
+const STORAGE_SLOTS_KEY = 'ev_derelicts_hub_slots_v1';
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   isOpen,
   onClose,
   player,
+  currentSystem,
   onStartNewGame,
   onLoadGame,
   soundEnabled,
   setSoundEnabled,
 }) => {
-  const [activeTab, setActiveTab] = useState<'menu' | 'new_game' | 'save_game' | 'load_game' | 'options'>('menu');
-  
-  // New Game parameters
+  const [activeTab, setActiveTab] = useState<'menu' | 'new_game' | 'save_game' | 'load_game' | 'options' | 'app_store'>('menu');
+
+  // New game form inputs
   const [pilotName, setPilotName] = useState('Captain Jonathan Corvus');
   const [shipName, setShipName] = useState('SS Peregrine');
 
@@ -167,18 +170,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       {/* Background Starfield Particles & Ambient Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.12)_0%,rgba(0,0,0,0.95)_75%)] pointer-events-none" />
 
-      {/* Main Container */}
-      <div className="relative w-full max-w-2xl bg-slate-950 border-2 border-cyan-500/50 rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.25)] overflow-hidden flex flex-col max-h-[92vh]">
+      {/* Main Container Styled as Classic Ambrosia/EV Metallic Command Window */}
+      <div className="relative w-full max-w-2xl ev-panel rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.25)] overflow-hidden flex flex-col max-h-[92vh]">
         
-        {/* Top Header Bar */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-cyan-900/60 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-900/80 to-amber-900/40 border border-cyan-500/60 flex items-center justify-center shadow-lg">
+        {/* Top Header Bar with Dual Pinstripe Accent */}
+        <div className="ev-titlebar p-4 sm:p-5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-900 to-slate-900 border border-cyan-500/60 flex items-center justify-center shadow-lg">
               <Compass className="w-6 h-6 text-cyan-400" />
             </div>
             <div>
-              <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase block">
-                MAIN COMMAND CONSOLE
+              <span className="text-xs font-mono tracking-widest text-amber-400 uppercase font-bold block">
+                MAIN COMMAND CONSOLE // ESCAPE VELOCITY
               </span>
               <h1 className="text-xl sm:text-2xl font-display font-black tracking-wider text-slate-100 uppercase">
                 THE COSMOS: <span className="text-cyan-400">DERELICT'S HUB</span>
@@ -191,7 +194,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               sound.playMenu();
               onClose();
             }}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="ev-btn p-2 text-slate-300 hover:text-white"
             title="Resume Flight"
           >
             <X className="w-5 h-5" />
@@ -200,7 +203,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
         {/* Floating Notification */}
         {notification && (
-          <div className="bg-cyan-950/90 border-b border-cyan-500/60 px-4 py-2 text-center text-xs font-mono text-cyan-300 animate-in fade-in duration-150">
+          <div className="bg-cyan-950/95 border-b border-cyan-500/60 px-4 py-2 text-center text-xs sm:text-sm font-mono text-cyan-200 font-bold animate-in fade-in duration-150">
             {notification}
           </div>
         )}
@@ -208,32 +211,32 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 no-scrollbar">
           
-          {/* VIEW: MAIN ROOT MENU */}
+          {/* VIEW: MAIN ROOT MENU with classic EV Beveled Action Buttons */}
           {activeTab === 'menu' && (
             <div className="space-y-6 max-w-md mx-auto py-2">
-              <div className="text-center space-y-1">
-                <span className="text-xs font-mono text-slate-400 uppercase tracking-widest">
+              <div className="text-center space-y-1.5">
+                <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-bold">
                   Escape Velocity (1996) Space Opera System
                 </span>
-                <p className="text-xs font-sans text-slate-400">
-                  Select an operational mode to begin your journey through the cosmos.
+                <p className="text-xs sm:text-sm font-sans text-slate-300 leading-normal">
+                  Select an operational mode to command your vessel and journey through the galaxy.
                 </p>
               </div>
 
               <div className="space-y-3 font-display">
-                {/* 1. Resume Game (if in active game) */}
+                {/* 1. Resume Game */}
                 <button
                   onClick={() => {
                     sound.playSelect();
                     onClose();
                   }}
-                  className="w-full py-3.5 px-5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-bold text-sm sm:text-base rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-between cursor-pointer group"
+                  className="w-full py-3.5 px-5 ev-btn-emerald rounded-xl flex items-center justify-between cursor-pointer group shadow-lg"
                 >
                   <div className="flex items-center gap-3">
                     <Play className="w-5 h-5 fill-current" />
-                    <span>Resume Flight</span>
+                    <span className="text-sm sm:text-base font-black">Resume Flight</span>
                   </div>
-                  <span className="text-xs font-mono uppercase opacity-80 group-hover:translate-x-1 transition-transform">
+                  <span className="text-xs font-mono uppercase font-bold opacity-85 group-hover:translate-x-1 transition-transform">
                     {player.pilotName}
                   </span>
                 </button>
@@ -244,13 +247,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('new_game');
                   }}
-                  className="w-full py-3.5 px-5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-bold text-sm sm:text-base rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] flex items-center justify-between cursor-pointer group"
+                  className="w-full py-3.5 px-5 ev-btn-cyan rounded-xl flex items-center justify-between cursor-pointer group shadow-lg"
                 >
                   <div className="flex items-center gap-3">
                     <Rocket className="w-5 h-5" />
-                    <span>New Game</span>
+                    <span className="text-sm sm:text-base font-black">New Game</span>
                   </div>
-                  <span className="text-xs font-mono uppercase opacity-80 group-hover:translate-x-1 transition-transform">
+                  <span className="text-xs font-mono uppercase font-bold opacity-85 group-hover:translate-x-1 transition-transform">
                     Start on Levo
                   </span>
                 </button>
@@ -261,13 +264,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('save_game');
                   }}
-                  className="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/60 text-slate-200 font-bold text-sm sm:text-base rounded-xl transition-all flex items-center justify-between cursor-pointer group"
+                  className="w-full py-3.5 px-5 ev-btn rounded-xl flex items-center justify-between cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
                     <Save className="w-5 h-5 text-amber-400" />
-                    <span>Save Game</span>
+                    <span className="text-sm sm:text-base font-bold">Save Game</span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 group-hover:text-amber-300">
+                  <span className="text-xs font-mono text-slate-400 group-hover:text-amber-300 font-semibold">
                     Store Dossier
                   </span>
                 </button>
@@ -278,13 +281,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('load_game');
                   }}
-                  className="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/60 text-slate-200 font-bold text-sm sm:text-base rounded-xl transition-all flex items-center justify-between cursor-pointer group"
+                  className="w-full py-3.5 px-5 ev-btn rounded-xl flex items-center justify-between cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
                     <FolderOpen className="w-5 h-5 text-cyan-400" />
-                    <span>Load Game</span>
+                    <span className="text-sm sm:text-base font-bold">Load Game</span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 group-hover:text-cyan-300">
+                  <span className="text-xs font-mono text-slate-400 group-hover:text-cyan-300 font-semibold">
                     Saved Profiles
                   </span>
                 </button>
@@ -295,22 +298,39 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('options');
                   }}
-                  className="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-bold text-sm sm:text-base rounded-xl transition-all flex items-center justify-between cursor-pointer group"
+                  className="w-full py-3.5 px-5 ev-btn rounded-xl flex items-center justify-between cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
                     <Settings className="w-5 h-5 text-slate-400 group-hover:rotate-45 transition-transform" />
-                    <span>Options</span>
+                    <span className="text-sm sm:text-base font-bold">Options</span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400">
-                    Audio & Display
+                  <span className="text-xs font-mono text-slate-400 font-semibold">
+                    Audio &amp; Display
+                  </span>
+                </button>
+
+                {/* 6. Apple & Android App Store Guide */}
+                <button
+                  onClick={() => {
+                    sound.playMenu();
+                    setActiveTab('app_store');
+                  }}
+                  className="w-full py-3.5 px-5 ev-btn rounded-xl flex items-center justify-between cursor-pointer group border-cyan-800/80"
+                >
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-cyan-400" />
+                    <span className="text-sm sm:text-base font-bold text-cyan-300">App Store &amp; Mobile Setup</span>
+                  </div>
+                  <span className="text-xs font-mono text-amber-400 font-semibold">
+                    iOS / Android Guide
                   </span>
                 </button>
               </div>
 
               {/* Status summary at bottom */}
-              <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
-                <span>Date: {formatGameDate(player.stardate)}</span>
-                <span className="text-amber-400 font-semibold">{player.credits.toLocaleString()} Cr</span>
+              <div className="pt-4 border-t border-slate-700/80 flex items-center justify-between text-xs sm:text-sm font-mono text-slate-300">
+                <span>Current Date: <strong className="text-cyan-300">{formatGameDate(player.stardate)}</strong></span>
+                <span className="text-amber-300 font-bold">{player.credits.toLocaleString()} Cr</span>
               </div>
             </div>
           )}
@@ -318,12 +338,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {/* VIEW: NEW GAME CONFIGURATION */}
           {activeTab === 'new_game' && (
             <div className="space-y-5">
-              <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <div className="border-b border-slate-700/80 pb-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-display font-bold text-cyan-300 uppercase">
+                  <h3 className="text-lg font-display font-black text-cyan-300 uppercase">
                     Initialize New Campaign
                   </h3>
-                  <p className="text-xs font-mono text-slate-400">
+                  <p className="text-xs font-mono text-slate-300">
                     Commence your independent spacer career on the frontier.
                   </p>
                 </div>
@@ -332,75 +352,75 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('menu');
                   }}
-                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer"
+                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer font-bold"
                 >
-                  Back to Menu
+                  ← Back to Menu
                 </button>
               </div>
 
               {/* Starting Parameters Briefing Card */}
-              <div className="bg-slate-900/80 border border-amber-500/40 rounded-xl p-4 space-y-3 shadow-lg">
-                <div className="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold uppercase tracking-wider">
-                  <ShieldAlert className="w-4 h-4" />
-                  <span>Mandatory Starting Parameters</span>
+              <div className="ev-panel border-2 border-amber-500/50 rounded-xl p-5 space-y-4 shadow-xl">
+                <div className="flex items-center gap-2.5 text-amber-300 font-mono text-xs font-bold uppercase tracking-wider">
+                  <ShieldAlert className="w-4 h-4 text-amber-400" />
+                  <span>Mandatory Starting Flight Parameters</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">COMMISSIONED VESSEL</span>
-                    <span className="text-slate-100 font-bold text-sm block">Shuttlecraft</span>
-                    <span className="text-slate-400 text-[10px]">Rendelli Model 805R (20t Hold)</span>
+                  <div className="ev-panel-inset p-3 rounded-lg">
+                    <span className="text-slate-400 text-xs block font-bold">COMMISSIONED VESSEL</span>
+                    <span className="text-slate-100 font-black text-base block mt-0.5">Shuttlecraft</span>
+                    <span className="text-slate-300 text-xs">Rendelli Model 805R (20t Cargo Hold)</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">STARTING PLANET & SYSTEM</span>
-                    <span className="text-cyan-400 font-bold text-sm block">Levo Spaceport</span>
-                    <span className="text-slate-400 text-[10px]">Independent Worlds Sector</span>
+                  <div className="ev-panel-inset p-3 rounded-lg">
+                    <span className="text-slate-400 text-xs block font-bold">STARTING SYSTEM &amp; WORLD</span>
+                    <span className="text-cyan-300 font-black text-base block mt-0.5">Levo Spaceport</span>
+                    <span className="text-slate-300 text-xs">Independent Worlds Sector</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">COMMERCIAL BANK DEBT</span>
-                    <span className="text-rose-400 font-bold text-sm block">69,420 Credits</span>
-                    <span className="text-slate-400 text-[10px]">Owed to First Interstellar Bank</span>
+                  <div className="ev-panel-inset p-3 rounded-lg">
+                    <span className="text-slate-400 text-xs block font-bold">COMMERCIAL BANK DEBT</span>
+                    <span className="text-rose-400 font-black text-base block mt-0.5">69,420 Credits</span>
+                    <span className="text-slate-300 text-xs">Owed to First Interstellar Bank</span>
                   </div>
 
-                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">LAUNCH DATE</span>
-                    <span className="text-emerald-400 font-bold text-sm block">November 1, 2279</span>
-                    <span className="text-slate-400 text-[10px]">Starting Pocket Cash: 2,000 Cr</span>
+                  <div className="ev-panel-inset p-3 rounded-lg">
+                    <span className="text-slate-400 text-xs block font-bold">LAUNCH DATE</span>
+                    <span className="text-emerald-400 font-black text-base block mt-0.5">November 1, 2279</span>
+                    <span className="text-slate-300 text-xs">Starting Pocket Cash: 2,000 Cr</span>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-950/60 rounded border border-slate-800/80 text-xs font-sans text-slate-300 leading-relaxed">
+                <div className="p-3.5 ev-panel-inset rounded-lg text-xs sm:text-sm font-sans text-slate-200 leading-relaxed">
                   You awaken on the ocean world of <strong>Levo</strong> with a secondhand Shuttlecraft, 2,000 liquid credits, and a heavy <strong>69,420 Cr</strong> debt to repay the bank. Accept shipping contracts, barter commodities across hyperspace, and repay your loan to earn true freedom.
                 </div>
               </div>
 
               {/* Pilot & Ship Customization */}
-              <div className="space-y-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                <span className="text-xs font-mono uppercase text-slate-400 block tracking-wider">
+              <div className="space-y-3 ev-panel-inset p-4 rounded-xl border border-slate-700">
+                <span className="text-xs font-mono uppercase text-cyan-400 block tracking-wider font-bold">
                   Pilot Registration Credentials
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-mono">
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Pilot Name:</label>
+                    <label className="text-xs text-slate-300 block mb-1 font-semibold">Pilot Callname:</label>
                     <input
                       type="text"
                       value={pilotName}
                       onChange={(e) => setPilotName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-400"
+                      className="w-full bg-black/90 border border-slate-600 rounded px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-cyan-400 font-mono"
                       placeholder="e.g. Captain Jonathan Corvus"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Vessel Designation:</label>
+                    <label className="text-xs text-slate-300 block mb-1 font-semibold">Vessel Transponder Designation:</label>
                     <input
                       type="text"
                       value={shipName}
                       onChange={(e) => setShipName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-cyan-400"
+                      className="w-full bg-black/90 border border-slate-600 rounded px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-cyan-400 font-mono"
                       placeholder="e.g. SS Peregrine"
                     />
                   </div>
@@ -414,7 +434,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('menu');
                   }}
-                  className="px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 font-mono text-xs hover:bg-slate-800 cursor-pointer"
+                  className="ev-btn px-4 py-2.5 text-xs text-slate-300"
                 >
                   Cancel
                 </button>
@@ -425,7 +445,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     onStartNewGame(pilotName || 'Captain Jonathan Corvus', shipName || 'SS Peregrine');
                     onClose();
                   }}
-                  className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-display font-bold text-sm rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all cursor-pointer flex items-center gap-2"
+                  className="ev-btn-cyan px-6 py-3 text-xs sm:text-sm font-bold flex items-center gap-2"
                 >
                   <Rocket className="w-4 h-4" />
                   <span>Launch Campaign on Levo</span>
@@ -437,12 +457,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {/* VIEW: SAVE GAME */}
           {activeTab === 'save_game' && (
             <div className="space-y-4">
-              <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <div className="border-b border-slate-700/80 pb-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-display font-bold text-amber-300 uppercase">
+                  <h3 className="text-lg font-display font-black text-amber-300 uppercase">
                     Save Flight Dossier
                   </h3>
-                  <p className="text-xs font-mono text-slate-400">
+                  <p className="text-xs font-mono text-slate-300">
                     Record your current campaign progress into browser storage.
                   </p>
                 </div>
@@ -451,13 +471,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('menu');
                   }}
-                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer"
+                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer font-bold"
                 >
-                  Back to Menu
+                  ← Back to Menu
                 </button>
               </div>
 
-              {/* Save Slots List */}
+              {/* Save Slots with Clear, High-Contrast Typography */}
               <div className="space-y-3">
                 {['slot_1', 'slot_2', 'slot_3', 'quicksave'].map((slotId, index) => {
                   const existing = saveSlots[slotId];
@@ -466,37 +486,37 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   return (
                     <div
                       key={slotId}
-                      className="p-3.5 bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono transition-colors"
+                      className="p-4 ev-panel rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-mono"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-100">{slotLabel}</span>
+                          <span className="font-bold text-slate-100 text-sm">{slotLabel}</span>
                           {existing ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60">
-                              Occupied
+                            <span className="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-semibold">
+                              Archived Profile
                             </span>
                           ) : (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                            <span className="text-xs px-2 py-0.5 rounded bg-black text-slate-400 border border-slate-700">
                               Empty Slot
                             </span>
                           )}
                         </div>
 
                         {existing ? (
-                          <div className="text-[11px] text-slate-400 space-y-0.5">
+                          <div className="text-xs text-slate-300 space-y-0.5">
                             <div>
-                              Pilot: <span className="text-slate-200">{existing.playerState.pilotName}</span> · Vessel: <span className="text-cyan-300">{existing.playerState.currentShip.name}</span>
+                              Pilot: <strong className="text-slate-100">{existing.playerState.pilotName}</strong> · Ship: <span className="text-cyan-300 font-semibold">{existing.playerState.currentShip.name}</span>
                             </div>
                             <div>
-                              Location: <span className="text-amber-300">{existing.playerState.currentSystemId.toUpperCase()}</span> · Date: <span className="text-slate-300">{formatGameDate(existing.playerState.stardate)}</span>
+                              Location: <span className="text-amber-300 font-semibold">{existing.playerState.currentSystemId.toUpperCase()}</span> · Balance: <span className="text-emerald-400 font-bold">{existing.playerState.credits.toLocaleString()} Cr</span>
                             </div>
-                            <div className="text-slate-500 text-[10px]">
-                              Saved on: {existing.savedAt}
+                            <div className="text-slate-400 text-xs">
+                              Archived: {existing.savedAt} · Date: {formatGameDate(existing.playerState.stardate)}
                             </div>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-slate-500 italic">
-                            No flight data currently archived in this slot.
+                          <p className="text-xs text-slate-400 italic">
+                            Empty save slot ready for new telemetry record.
                           </p>
                         )}
                       </div>
@@ -504,16 +524,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => saveToSlot(slotId, slotLabel)}
-                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-display font-semibold text-xs rounded transition-colors cursor-pointer flex items-center gap-1.5"
+                          className="ev-btn-amber px-4 py-2 text-xs font-bold"
                         >
-                          <Save className="w-3.5 h-3.5" />
-                          <span>{existing ? 'Overwrite' : 'Save Game'}</span>
+                          Save To Slot
                         </button>
-
                         {existing && (
                           <button
                             onClick={() => deleteSlot(slotId)}
-                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                            className="ev-btn p-2 text-rose-400 hover:text-white"
                             title="Delete Save"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -525,16 +543,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 })}
               </div>
 
-              {/* JSON Export Utility */}
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-400">
-                  Export save file for local backup:
+              {/* JSON Backup Utility */}
+              <div className="pt-3 border-t border-slate-700/80 flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-300">
+                  Export save file to your local computer:
                 </span>
                 <button
                   onClick={() => exportSaveFile()}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-mono rounded flex items-center gap-1.5 cursor-pointer"
+                  className="ev-btn px-3 py-1.5 text-xs flex items-center gap-1.5 text-slate-200"
                 >
-                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <Download className="w-4 h-4 text-cyan-400" />
                   <span>Download .json Save</span>
                 </button>
               </div>
@@ -544,12 +562,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {/* VIEW: LOAD GAME */}
           {activeTab === 'load_game' && (
             <div className="space-y-4">
-              <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <div className="border-b border-slate-700/80 pb-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-display font-bold text-cyan-300 uppercase">
+                  <h3 className="text-lg font-display font-black text-cyan-300 uppercase">
                     Load Flight Dossier
                   </h3>
-                  <p className="text-xs font-mono text-slate-400">
+                  <p className="text-xs font-mono text-slate-300">
                     Restore a saved profile from local storage or backup file.
                   </p>
                 </div>
@@ -558,9 +576,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('menu');
                   }}
-                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer"
+                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer font-bold"
                 >
-                  Back to Menu
+                  ← Back to Menu
                 </button>
               </div>
 
@@ -573,36 +591,36 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   return (
                     <div
                       key={slotId}
-                      className="p-3.5 bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono transition-colors"
+                      className="p-4 ev-panel rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs font-mono"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-100">{slotLabel}</span>
+                          <span className="font-bold text-slate-100 text-sm">{slotLabel}</span>
                           {existing ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60 font-semibold">
+                            <span className="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-semibold">
                               Ready to Load
                             </span>
                           ) : (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                            <span className="text-xs px-2 py-0.5 rounded bg-black text-slate-400 border border-slate-700">
                               Empty Slot
                             </span>
                           )}
                         </div>
 
                         {existing ? (
-                          <div className="text-[11px] text-slate-400 space-y-0.5">
+                          <div className="text-xs text-slate-300 space-y-0.5">
                             <div>
-                              Pilot: <span className="text-slate-100 font-semibold">{existing.playerState.pilotName}</span> · Ship: <span className="text-cyan-300">{existing.playerState.currentShip.name}</span>
+                              Pilot: <strong className="text-slate-100">{existing.playerState.pilotName}</strong> · Ship: <span className="text-cyan-300 font-semibold">{existing.playerState.currentShip.name}</span>
                             </div>
                             <div>
-                              Location: <span className="text-amber-300">{existing.playerState.currentSystemId.toUpperCase()}</span> · Balance: <span className="text-emerald-400">{existing.playerState.credits.toLocaleString()} Cr</span>
+                              Location: <span className="text-amber-300 font-semibold">{existing.playerState.currentSystemId.toUpperCase()}</span> · Balance: <span className="text-emerald-400 font-bold">{existing.playerState.credits.toLocaleString()} Cr</span>
                             </div>
-                            <div className="text-slate-500 text-[10px]">
+                            <div className="text-slate-400 text-xs">
                               Archived: {existing.savedAt} · Date: {formatGameDate(existing.playerState.stardate)}
                             </div>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-slate-500 italic">
+                          <p className="text-xs text-slate-400 italic">
                             No flight records saved in this slot.
                           </p>
                         )}
@@ -613,21 +631,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           <>
                             <button
                               onClick={() => loadFromSlot(slotId)}
-                              className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-display font-bold text-xs rounded transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
+                              className="ev-btn-cyan px-4 py-2 text-xs font-bold flex items-center gap-1.5"
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
                               <span>Load Game</span>
                             </button>
                             <button
                               onClick={() => deleteSlot(slotId)}
-                              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                              className="ev-btn p-2 text-rose-400 hover:text-white"
                               title="Delete Save"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </>
                         ) : (
-                          <span className="text-slate-600 font-mono text-[11px] italic">
+                          <span className="text-slate-500 font-mono text-xs italic">
                             Empty
                           </span>
                         )}
@@ -638,12 +656,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
 
               {/* JSON Import Utility */}
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-400">
+              <div className="pt-3 border-t border-slate-700/80 flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-300">
                   Restore from external backup file:
                 </span>
-                <label className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-mono rounded flex items-center gap-1.5 cursor-pointer">
-                  <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                <label className="ev-btn px-3 py-1.5 text-xs flex items-center gap-1.5 cursor-pointer text-slate-200">
+                  <Upload className="w-4 h-4 text-cyan-400" />
                   <span>Import .json Save</span>
                   <input
                     type="file"
@@ -659,12 +677,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {/* VIEW: OPTIONS */}
           {activeTab === 'options' && (
             <div className="space-y-4">
-              <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
+              <div className="border-b border-slate-700/80 pb-3 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-display font-bold text-slate-100 uppercase">
+                  <h3 className="text-lg font-display font-black text-slate-100 uppercase">
                     System Configuration
                   </h3>
-                  <p className="text-xs font-mono text-slate-400">
+                  <p className="text-xs font-mono text-slate-300">
                     Audio telemetry and user interface options.
                   </p>
                 </div>
@@ -673,21 +691,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     sound.playMenu();
                     setActiveTab('menu');
                   }}
-                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer"
+                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer font-bold"
                 >
-                  Back to Menu
+                  ← Back to Menu
                 </button>
               </div>
 
               {/* Audio Controls */}
-              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div className="ev-panel p-5 rounded-xl space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-display font-semibold text-slate-200 block">
+                    <span className="text-sm sm:text-base font-display font-bold text-slate-100 block">
                       Sound Effects (Escape Velocity Audio)
                     </span>
-                    <span className="text-xs font-mono text-slate-400">
-                      Dual-mode synthesizer &amp; custom WAV soundboard
+                    <span className="text-xs font-mono text-slate-300">
+                      Classic Ambrosia WAV soundboard with retro audio synthesizer
                     </span>
                   </div>
                   <button
@@ -697,50 +715,48 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                       sound.enabled = next;
                       if (next) sound.playSelect();
                     }}
-                    className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                      soundEnabled
-                        ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50'
-                        : 'bg-slate-800 text-slate-500'
+                    className={`px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                      soundEnabled ? 'ev-btn-cyan' : 'ev-btn opacity-60 text-slate-400'
                     }`}
                   >
-                    {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
-                    <span>{soundEnabled ? 'Enabled' : 'Muted'}</span>
+                    {soundEnabled ? <Volume2 className="w-4 h-4 text-white" /> : <VolumeX className="w-4 h-4" />}
+                    <span>{soundEnabled ? 'Audio Active' : 'Muted'}</span>
                   </button>
                 </div>
 
                 {/* Sound effect tester buttons */}
-                <div className="pt-2 border-t border-slate-800 space-y-2">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                <div className="pt-3 border-t border-slate-800 space-y-2">
+                  <span className="text-xs font-mono text-slate-300 uppercase tracking-wider block font-bold">
                     Audio Diagnostic Soundboard Test:
                   </span>
                   <div className="flex flex-wrap gap-2 text-xs font-mono">
                     <button
                       onClick={() => sound.playSelect()}
-                      className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-slate-300 cursor-pointer"
+                      className="ev-btn px-3 py-1.5 text-slate-200"
                     >
                       Item Select
                     </button>
                     <button
                       onClick={() => sound.playMenu()}
-                      className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-cyan-300 cursor-pointer"
+                      className="ev-btn px-3 py-1.5 text-cyan-300"
                     >
                       Menu Beep
                     </button>
                     <button
                       onClick={() => sound.playHyperspaceJump()}
-                      className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-amber-300 cursor-pointer"
+                      className="ev-btn px-3 py-1.5 text-amber-300"
                     >
                       Warp Jump
                     </button>
                     <button
                       onClick={() => sound.playLanding()}
-                      className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-emerald-300 cursor-pointer"
+                      className="ev-btn px-3 py-1.5 text-emerald-300"
                     >
                       Planetary Landing
                     </button>
                     <button
                       onClick={() => sound.playCredit()}
-                      className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-yellow-300 cursor-pointer"
+                      className="ev-btn px-3 py-1.5 text-yellow-300"
                     >
                       Credits Sound
                     </button>
@@ -749,15 +765,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
 
               {/* Data & Reset Actions */}
-              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-                <span className="text-sm font-display font-semibold text-slate-200 block">
+              <div className="ev-panel p-5 rounded-xl space-y-3.5">
+                <span className="text-sm sm:text-base font-display font-bold text-slate-100 block">
                   Campaign Dossier Management
                 </span>
-                <p className="text-xs font-mono text-slate-400">
-                  Reset current active flight data or restore initial game baseline.
+                <p className="text-xs font-mono text-slate-300">
+                  Reset current active flight data or restore the initial game starting scenario.
                 </p>
 
-                <div className="pt-1 flex items-center justify-between">
+                <div className="pt-2 flex items-center justify-between">
                   <button
                     onClick={() => {
                       if (window.confirm('Reset current game back to the starting parameters on Levo (Shuttlecraft with 69,420 Cr debt)?')) {
@@ -767,7 +783,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                         onClose();
                       }
                     }}
-                    className="px-3 py-1.5 bg-rose-950/70 hover:bg-rose-900 border border-rose-600/50 text-rose-300 text-xs font-mono rounded cursor-pointer transition-colors"
+                    className="ev-btn py-2 px-3.5 text-rose-300 hover:text-white text-xs"
                   >
                     Reset Campaign to Levo Baseline
                   </button>
@@ -777,10 +793,136 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                       sound.playMenu();
                       setActiveTab('menu');
                     }}
-                    className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded cursor-pointer"
+                    className="ev-btn px-4 py-2 text-xs"
                   >
                     Close Options
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: APP STORE & MOBILE EXPORT GUIDE (Comprehensive In-App Guide) */}
+          {activeTab === 'app_store' && (
+            <div className="space-y-5">
+              <div className="border-b border-slate-700/80 pb-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-display font-black text-cyan-300 uppercase">
+                    Publishing to Apple &amp; Android App Stores
+                  </h3>
+                  <p className="text-xs font-mono text-slate-300">
+                    Step-by-step workflow for iOS App Store and Google Play Store distribution.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    sound.playMenu();
+                    setActiveTab('menu');
+                  }}
+                  className="text-xs font-mono text-cyan-400 hover:underline cursor-pointer font-bold"
+                >
+                  ← Back to Menu
+                </button>
+              </div>
+
+              {/* Method 1: Capacitor (Recommended Standard) */}
+              <div className="ev-panel p-5 rounded-xl space-y-3.5 shadow-xl">
+                <div className="flex items-center gap-2.5 text-cyan-300">
+                  <Smartphone className="w-5 h-5 text-cyan-400" />
+                  <h4 className="font-display font-bold text-base uppercase">
+                    Method 1: Native Wrapper via Capacitor (Industry Standard)
+                  </h4>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
+                  Capacitor (by Ionic) turns this React + Vite app into full native iOS (Xcode) and Android (Android Studio) projects. You get native status bar control, app icons, splash screens, and direct App Store / Play Store binary outputs (.ipa / .aab).
+                </p>
+
+                <div className="ev-panel-inset p-3.5 rounded-lg space-y-2 font-mono text-xs text-slate-200">
+                  <div className="text-amber-400 font-bold uppercase tracking-wider">Terminal Commands:</div>
+                  <pre className="p-2.5 bg-black/90 rounded border border-slate-800 text-cyan-300 overflow-x-auto">
+{`# 1. Install Capacitor packages
+npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+
+# 2. Initialize Capacitor project
+npx cap init "The Cosmos: Derelict's Hub" "com.derelictshub.game"
+
+# 3. Build production web bundle
+npm run build
+
+# 4. Add native platforms
+npx cap add ios
+npx cap add android
+
+# 5. Open in native IDEs
+npx cap open ios      # Opens in Xcode (for Apple App Store)
+npx cap open android  # Opens in Android Studio (for Google Play)`}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Method 2: PWABuilder (Zero-Code Packaging) */}
+              <div className="ev-panel p-5 rounded-xl space-y-3.5 shadow-xl">
+                <div className="flex items-center gap-2.5 text-amber-300">
+                  <Layers className="w-5 h-5 text-amber-400" />
+                  <h4 className="font-display font-bold text-base uppercase">
+                    Method 2: PWABuilder (Fastest PWA-to-Store Package)
+                  </h4>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
+                  Microsoft's open-source <strong>PWABuilder</strong> (pwabuilder.com) takes your deployed web URL, reads the included <code>manifest.json</code> and Service Worker (which are already configured in this app), and generates ready-to-submit packages for both stores.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                  <div className="ev-panel-inset p-3 rounded-lg space-y-1">
+                    <span className="text-cyan-400 font-bold block uppercase">Apple App Store (iOS)</span>
+                    <p className="text-slate-300 font-sans text-xs">
+                      Generates an Xcode project with WebKit wrapper and icons pre-configured, ready to archive and upload via Transporter.
+                    </p>
+                  </div>
+
+                  <div className="ev-panel-inset p-3 rounded-lg space-y-1">
+                    <span className="text-emerald-400 font-bold block uppercase">Google Play (Android)</span>
+                    <p className="text-slate-300 font-sans text-xs">
+                      Generates a Trusted Web Activity (TWA) Android App Bundle (.aab) with digital asset links, ready to upload directly to Play Console.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Store Requirements Checklist */}
+              <div className="ev-panel p-5 rounded-xl space-y-3 shadow-xl">
+                <h4 className="font-display font-bold text-base text-slate-100 uppercase">
+                  Developer Accounts &amp; Store Requirements
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-mono">
+                  <div className="ev-panel-inset p-3.5 rounded-lg space-y-1.5">
+                    <div className="flex items-center gap-2 text-slate-100 font-bold">
+                      <Apple className="w-4 h-4 text-slate-200" />
+                      <span>Apple App Store Checklist</span>
+                    </div>
+                    <ul className="text-slate-300 space-y-1 font-sans text-xs list-disc pl-4">
+                      <li>Apple Developer Program ($99/year)</li>
+                      <li>App icon: 1024x1024 PNG (no transparency)</li>
+                      <li>Screenshots: 6.7" iPhone &amp; 12.9" iPad</li>
+                      <li>Hosted Privacy Policy URL</li>
+                      <li>Mac with Xcode required for final code signing</li>
+                    </ul>
+                  </div>
+
+                  <div className="ev-panel-inset p-3.5 rounded-lg space-y-1.5">
+                    <div className="flex items-center gap-2 text-slate-100 font-bold">
+                      <Smartphone className="w-4 h-4 text-emerald-400" />
+                      <span>Google Play Store Checklist</span>
+                    </div>
+                    <ul className="text-slate-300 space-y-1 font-sans text-xs list-disc pl-4">
+                      <li>Google Play Console account ($25 one-time fee)</li>
+                      <li>App icon: 512x512 PNG</li>
+                      <li>Feature graphic: 1024x500 PNG</li>
+                      <li>Hosted Privacy Policy URL</li>
+                      <li>20 testers for 14 days (Google closed testing rule)</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>

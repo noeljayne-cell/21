@@ -4,6 +4,7 @@ import { generateMissionsForPlanet } from '../data/galaxyData';
 import { formatGameDate } from '../utils/dateUtils';
 import { sound } from '../audio/soundFx';
 import { Briefcase, CheckCircle2, Clock, MapPin, AlertTriangle, ShieldCheck, ArrowRight, DollarSign } from 'lucide-react';
+import { SectionEditButton } from './SectionEditButton';
 
 interface MissionComputerProps {
   planet: StellarObject;
@@ -40,17 +41,22 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
   const freeCargoTons = Math.max(0, maxCargoTons - usedCargoTons);
 
   return (
-    <div className="space-y-4">
-      {/* Header Mission Diagnostic */}
-      <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-800 rounded text-cyan-400">
-            <Briefcase className="w-5 h-5" />
+    <div className="space-y-5 select-none">
+      {/* Header Mission Diagnostic in Escape Velocity Console Style */}
+      <div className="ev-panel p-4 sm:p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono shadow-xl">
+        <div className="flex items-center gap-3.5">
+          <div className="p-3 bg-cyan-500/20 border border-cyan-500/40 rounded-xl text-cyan-400">
+            <Briefcase className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 uppercase block">INTERSTELLAR JOB BOARD</span>
-            <span className="text-base font-display font-bold text-slate-100">
-              {planet.name} Logistics Clearinghouse
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                INTERSTELLAR LOGISTICS JOB BOARD
+              </span>
+              <SectionEditButton label="Edit Header" />
+            </div>
+            <span className="text-lg sm:text-xl font-display font-black text-slate-100">
+              {planet.name} Freight Dispatch &amp; Courier Terminal
             </span>
           </div>
         </div>
@@ -61,10 +67,10 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
               sound.playMenu();
               setActiveTab('available');
             }}
-            className={`px-3 py-1.5 rounded transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded text-xs sm:text-sm font-display font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'available'
-                ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ? 'ev-btn-cyan shadow-md'
+                : 'ev-btn text-slate-300 hover:text-white'
             }`}
           >
             Available Jobs ({availableMissions.length})
@@ -74,10 +80,10 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
               sound.playMenu();
               setActiveTab('active');
             }}
-            className={`px-3 py-1.5 rounded transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded text-xs sm:text-sm font-display font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'active'
-                ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ? 'ev-btn-amber shadow-md'
+                : 'ev-btn text-slate-300 hover:text-white'
             }`}
           >
             Active Contracts ({player.activeMissions.length})
@@ -87,20 +93,20 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
 
       {/* Deliverable Missions Banner (Ready for Payout right now!) */}
       {deliverableMissions.length > 0 && (
-        <div className="bg-emerald-950/40 border border-emerald-500/50 p-3.5 rounded-lg space-y-2">
-          <div className="flex items-center gap-2 text-emerald-300 text-xs font-display font-bold uppercase tracking-wider">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="ev-panel border-2 border-emerald-500/70 p-4 sm:p-5 rounded-xl space-y-3 shadow-xl">
+          <div className="flex items-center gap-2 text-emerald-300 text-xs sm:text-sm font-display font-black uppercase tracking-wider">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             <span>Target Destination Reached · Ready for Consignment Handover!</span>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {deliverableMissions.map((m) => (
               <div
                 key={m.id}
-                className="bg-slate-950/80 p-3 rounded border border-emerald-800/40 flex items-center justify-between gap-3 text-xs font-mono"
+                className="ev-panel-inset p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm font-mono"
               >
                 <div>
-                  <span className="font-bold text-slate-100 block">{m.title}</span>
-                  <span className="text-slate-400 text-[10px]">
+                  <span className="font-bold text-slate-100 text-base block font-display">{m.title}</span>
+                  <span className="text-slate-300 text-xs mt-0.5 block">
                     Contract signed at origin. Delivery authorized on {planet.name}.
                   </span>
                 </div>
@@ -109,9 +115,9 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
                     sound.playCredit();
                     onCompleteMission(m.id);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-slate-950 font-display font-bold text-xs rounded shadow-[0_0_12px_rgba(16,185,129,0.35)] cursor-pointer transition-all whitespace-nowrap"
+                  className="ev-btn-emerald px-5 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap"
                 >
-                  Deliver & Collect +{m.rewardCredits.toLocaleString()} Cr
+                  Deliver &amp; Collect +{m.rewardCredits.toLocaleString()} Cr
                 </button>
               </div>
             ))}
@@ -121,72 +127,79 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
 
       {/* Tab 1: Available Missions */}
       {activeTab === 'available' && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {availableMissions.length === 0 ? (
-            <div className="p-8 text-center bg-slate-900/40 border border-slate-800 rounded text-xs font-mono text-slate-400">
-              No new contracts posted at this terminal right now. Check neighboring systems or advance stardate.
+            <div className="p-10 text-center ev-panel rounded-xl text-xs sm:text-sm font-mono text-slate-400">
+              No new contracts posted at this terminal right now. Check neighboring systems or advance time with system jumps.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-mono uppercase text-slate-400 font-bold tracking-wider">
+                  Postings ({availableMissions.length} Contracts Open)
+                </span>
+                <SectionEditButton label="Edit Postings" />
+              </div>
+              <div className="grid grid-cols-1 gap-4">
               {availableMissions.map((mission) => {
                 const needsCargo = (mission.cargoTons || 0) > freeCargoTons;
 
                 return (
                   <div
                     key={mission.id}
-                    className="p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-lg transition-all space-y-3"
+                    className="p-5 ev-panel rounded-xl transition-all space-y-3.5 shadow-md hover:border-slate-600"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-display font-bold text-sm text-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                      <div className="space-y-1.5 flex-1 min-w-0 pr-3">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="font-display font-black text-base sm:text-lg text-slate-100">
                             {mission.title}
                           </span>
-                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded uppercase ${
+                          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded uppercase ${
                             mission.riskLevel === 'Dangerous'
-                              ? 'bg-rose-950 text-rose-300 border border-rose-800/60'
-                              : 'bg-slate-800 text-slate-300'
+                              ? 'bg-rose-950 text-rose-300 border border-rose-600'
+                              : 'bg-black text-slate-300 border border-slate-700'
                           }`}>
                             {mission.riskLevel} Risk
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 font-sans leading-relaxed">
+                        <p className="text-sm text-slate-200 font-sans leading-relaxed">
                           {mission.description}
                         </p>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-base font-mono font-bold text-amber-400 tabular-nums block">
+                        <span className="text-lg sm:text-xl font-mono font-black text-amber-400 tabular-nums block">
                           +{mission.rewardCredits.toLocaleString()} Cr
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500">Contract Bounty</span>
+                        <span className="text-xs font-mono text-slate-400">Contract Bounty</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs font-mono">
-                      <div className="flex flex-wrap items-center gap-4 text-slate-300">
-                        <div className="flex items-center gap-1.5 text-cyan-300">
-                          <MapPin className="w-3.5 h-3.5" />
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm font-mono">
+                      <div className="flex flex-wrap items-center gap-4 text-slate-200">
+                        <div className="flex items-center gap-1.5 text-cyan-300 font-semibold">
+                          <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
                           <span>Dest: <strong>{mission.targetPlanetName}</strong> ({mission.targetSystemName})</span>
                         </div>
                         {mission.cargoTons && (
-                          <span className={needsCargo ? 'text-rose-400' : 'text-slate-300'}>
+                          <span className={needsCargo ? 'text-rose-400 font-bold' : 'text-slate-300'}>
                             Cargo: {mission.cargoTons} Tons {needsCargo && '(Hold Full!)'}
                           </span>
                         )}
-                        <div className="flex items-center gap-1 text-slate-400">
-                          <Clock className="w-3.5 h-3.5" />
+                        <div className="flex items-center gap-1.5 text-slate-300">
+                          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                           <span>Expires: {formatGameDate(mission.deadlineStardate)}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <button
                           onClick={() => {
                             sound.playClick(600);
                             onPlotRouteToSystem(mission.targetSystemId);
                           }}
-                          className="px-2.5 py-1 text-xs text-slate-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                          className="ev-btn px-3 py-1.5 text-xs text-slate-300 hover:text-white"
                         >
                           View Route
                         </button>
@@ -206,10 +219,10 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
                             }
                           }}
                           disabled={needsCargo}
-                          className={`px-3.5 py-1.5 font-display font-semibold text-xs rounded transition-all cursor-pointer ${
+                          className={`px-4 py-2 font-display font-bold text-xs sm:text-sm rounded transition-all cursor-pointer ${
                             !needsCargo
-                              ? 'bg-cyan-600 hover:bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                              ? 'ev-btn-cyan'
+                              : 'ev-btn opacity-50 text-slate-500 cursor-not-allowed'
                           }`}
                         >
                           {needsCargo ? 'Cargo Hold Full' : 'Accept Job'}
@@ -226,53 +239,53 @@ export const MissionComputer: React.FC<MissionComputerProps> = ({
 
       {/* Tab 2: Active Player Missions */}
       {activeTab === 'active' && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {player.activeMissions.length === 0 ? (
-            <div className="p-8 text-center bg-slate-900/40 border border-slate-800 rounded text-xs font-mono text-slate-400">
-              No active mission contracts. Accept contracts from the job board above!
+            <div className="p-10 text-center ev-panel rounded-xl text-xs sm:text-sm font-mono text-slate-400">
+              No active mission contracts. Accept courier or cargo contracts from the job board above!
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {player.activeMissions.map((m) => {
                 const isExpired = player.stardate > m.deadlineStardate;
 
                 return (
                   <div
                     key={m.id}
-                    className="p-3.5 bg-slate-900/60 border border-slate-800 rounded-lg text-xs font-mono space-y-2"
+                    className="p-4 sm:p-5 ev-panel rounded-xl text-xs sm:text-sm font-mono space-y-3 shadow-md"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="font-bold text-slate-200 block text-sm font-display">
+                        <span className="font-black text-slate-100 text-base sm:text-lg block font-display">
                           {m.title}
                         </span>
-                        <span className="text-slate-400 text-xs">
-                          Deliver to {m.targetPlanetName} ({m.targetSystemName})
+                        <span className="text-slate-300 text-xs sm:text-sm mt-0.5 block">
+                          Consignment Bound for <strong className="text-cyan-300">{m.targetPlanetName}</strong> in the {m.targetSystemName} System
                         </span>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-amber-400 tabular-nums block">
+                      <div className="text-right shrink-0">
+                        <span className="font-black text-amber-400 tabular-nums text-base sm:text-lg block">
                           +{m.rewardCredits.toLocaleString()} Cr
                         </span>
-                        <span className={isExpired ? 'text-rose-400 font-semibold' : 'text-slate-500'}>
-                          {isExpired ? 'OVERDUE' : `Due: ${formatGameDate(m.deadlineStardate)}`}
+                        <span className={`text-xs font-bold ${isExpired ? 'text-rose-400' : 'text-slate-400'}`}>
+                          {isExpired ? 'CONTRACT OVERDUE' : `Deadline: ${formatGameDate(m.deadlineStardate)}`}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
-                      <span className="text-slate-400">
-                        {m.cargoTons ? `Occupies ${m.cargoTons} tons cargo hold` : 'Data manifest'}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-800 text-xs">
+                      <span className="text-slate-300">
+                        {m.cargoTons ? `Occupies ${m.cargoTons} tons of cargo space` : 'Data disc / passenger charter'}
                       </span>
                       <button
                         onClick={() => {
                           sound.playClick(600);
                           onPlotRouteToSystem(m.targetSystemId);
                         }}
-                        className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
+                        className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 cursor-pointer"
                       >
-                        <span>Show on Starchart</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <span>Plot Starchart Route</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

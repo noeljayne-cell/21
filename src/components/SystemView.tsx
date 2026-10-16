@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StarSystem, StellarObject, PlayerState } from '../types/game';
 import { ASSET_IMAGES, generateSystemDossierText, getStellarObjectImage } from '../data/galaxyData';
+import { CelestialBodyGraphic } from './CelestialBodyGraphic';
 import { sound } from '../audio/soundFx';
 import { 
   Anchor, 
@@ -12,14 +13,10 @@ import {
   Briefcase, 
   Landmark, 
   Wine, 
-  ChevronRight,
-  ExternalLink,
-  Target,
-  Share2,
-  Copy,
-  Check
+  ChevronRight, 
+  ExternalLink, 
+  Target 
 } from 'lucide-react';
-import { ShareDossierModal } from './ShareDossierModal';
 
 interface SystemViewProps {
   system: StarSystem;
@@ -41,8 +38,6 @@ export const SystemView: React.FC<SystemViewProps> = ({
   );
   const [mobileTab, setMobileTab] = useState<'radar' | 'telemetry'>('radar');
   const [orbitalTime, setOrbitalTime] = useState<number>(0);
-  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
-  const [quickCopied, setQuickCopied] = useState<boolean>(false);
 
   // Subtle orbital motion simulation
   useEffect(() => {
@@ -55,22 +50,55 @@ export const SystemView: React.FC<SystemViewProps> = ({
     return () => cancelAnimationFrame(animId);
   }, []);
 
+  // Pre-calculate positions of all bodies (supporting satellites orbiting parent planets with comfortable spacing for clickability)
+  const objectPositions = useMemo(() => {
+    const posMap: Record<string, { x: number; y: number; parentX?: number; parentY?: number; isSatellite: boolean; sunAngle: number; satDist?: number }> = {};
+    
+    // First pass: Primary planets & standalone stations directly orbiting the central star
+    system.stellarObjects.forEach(obj => {
+      const parent = obj.parentId ? system.stellarObjects.find(p => p.id === obj.parentId) : null;
+      if (!parent) {
+        const angle = obj.initialAngle + orbitalTime * obj.orbitSpeed * 30;
+        const x = Math.cos(angle) * (obj.orbitRadius * 1.25);
+        const y = Math.sin(angle) * (obj.orbitRadius * 1.25);
+        const sunAngle = Math.atan2(-y, -x);
+        posMap[obj.id] = { x, y, isSatellite: false, sunAngle };
+      }
+    });
+
+    // Group satellites by parent planet to ensure tiered, distinct non-overlapping orbital tracks
+    const satellitesByParent: Record<string, StellarObject[]> = {};
+    system.stellarObjects.forEach(obj => {
+      if (obj.parentId) {
+        if (!satellitesByParent[obj.parentId]) satellitesByParent[obj.parentId] = [];
+        satellitesByParent[obj.parentId].push(obj);
+      }
+    });
+
+    // Second pass: Calculate spaced orbits for satellites (moons and orbital stations)
+    Object.entries(satellitesByParent).forEach(([parentId, sats]) => {
+      // Sort by initial orbitRadius to preserve inner station vs outer moon hierarchy
+      sats.sort((a, b) => (a.orbitRadius || 30) - (b.orbitRadius || 30));
+      sats.forEach((obj, idx) => {
+        const parentPos = posMap[parentId] || { x: 0, y: 0 };
+        const satAngle = obj.initialAngle + orbitalTime * (obj.orbitSpeed || 0.02) * 50;
+        // Spaced comfortably for easy clickability while staying tied to parent planet
+        // 1st body (e.g. Stardock Alpha): 58px radius, 2nd body (e.g. Luna): 96px radius
+        const satDist = 58 + idx * 38;
+        const x = parentPos.x + Math.cos(satAngle) * satDist;
+        const y = parentPos.y + Math.sin(satAngle) * satDist;
+        const sunAngle = Math.atan2(-y, -x);
+        posMap[obj.id] = { x, y, parentX: parentPos.x, parentY: parentPos.y, isSatellite: true, sunAngle, satDist };
+      });
+    });
+
+    return posMap;
+  }, [system.stellarObjects, orbitalTime]);
+
   const selectedObject = system.stellarObjects.find(o => o.id === selectedObjectId) || system.stellarObjects[0];
 
-  const handleQuickCopy = async () => {
-    sound.playCredit();
-    const text = generateSystemDossierText(system, selectedObject);
-    try {
-      await navigator.clipboard.writeText(text);
-      setQuickCopied(true);
-      setTimeout(() => setQuickCopied(false), 2000);
-    } catch {
-      // Fallback
-    }
-  };
-
   return (
-    <div className="relative w-full h-[calc(100vh-4rem)] bg-slate-950 overflow-hidden flex flex-col md:flex-row select-none">
+    <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col md:flex-row select-none">
       {/* Background Starfield */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none"
@@ -95,17 +123,6 @@ export const SystemView: React.FC<SystemViewProps> = ({
             <Compass className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Galaxy Jump Map</span>
             <span className="sm:hidden">Jump Map</span>
-          </button>
-
-          <button
-            onClick={() => {
-              sound.playMenu();
-              setIsShareModalOpen(true);
-            }}
-            className="bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded px-2.5 sm:px-3 py-1.5 text-xs font-display uppercase tracking-wider text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Share System Dossier</span>
           </button>
 
           {/* Mobile Radar / Telemetry Toggle (< md) */}
@@ -190,114 +207,77 @@ export const SystemView: React.FC<SystemViewProps> = ({
             </text>
           </g>
 
-          {/* Orbiting Planets & Space Stations */}
+          {/* ========================================================
+              ORBITAL TRACKS (Primary orbits around Star & Satellites around Planets)
+              ======================================================== */}
+          <g className="orbital-tracks pointer-events-none">
+            {system.stellarObjects.map((obj) => {
+              const pos = objectPositions[obj.id];
+              const isSelected = selectedObjectId === obj.id;
+              if (!pos) return null;
+
+              if (pos.isSatellite && pos.parentX !== undefined && pos.parentY !== undefined) {
+                // Satellite orbit around parent planet (e.g. Luna and Stardock Alpha orbiting Earth)
+                return (
+                  <circle
+                    key={`track-${obj.id}`}
+                    cx={pos.parentX}
+                    cy={pos.parentY}
+                    r={pos.satDist || obj.orbitRadius}
+                    fill="none"
+                    stroke={isSelected ? '#38bdf8' : '#334155'}
+                    strokeWidth={isSelected ? 1.4 : 0.8}
+                    strokeDasharray="2 3"
+                    opacity={isSelected ? 0.9 : 0.45}
+                  />
+                );
+              }
+
+              // Primary planet orbit around the central star
+              return (
+                <circle
+                  key={`track-${obj.id}`}
+                  cx={0}
+                  cy={0}
+                  r={obj.orbitRadius * 1.25}
+                  fill="none"
+                  stroke={isSelected ? '#06b6d4' : '#1e293b'}
+                  strokeWidth={isSelected ? 1.6 : 0.8}
+                  strokeDasharray={isSelected ? '4 2' : 'none'}
+                  opacity={isSelected ? 0.8 : 0.4}
+                />
+              );
+            })}
+          </g>
+
+          {/* ========================================================
+              ORBITING PLANETS, MOONS & SPACE STATIONS
+              ======================================================== */}
           {system.stellarObjects.map((obj) => {
-            const angle = obj.initialAngle + orbitalTime * obj.orbitSpeed * 30;
-            const x = Math.cos(angle) * (obj.orbitRadius * 1.25);
-            const y = Math.sin(angle) * (obj.orbitRadius * 1.25);
+            const pos = objectPositions[obj.id] || { x: 0, y: 0, sunAngle: 0 };
             const isSelected = selectedObjectId === obj.id;
             const isLanded = player.landedObjectId === obj.id;
 
             return (
-              <g key={obj.id}>
-                {/* Orbital Track */}
-                <circle
-                  r={obj.orbitRadius * 1.25}
-                  fill="none"
-                  stroke={isSelected ? '#06b6d4' : '#1e293b'}
-                  strokeWidth={isSelected ? 1.5 : 0.8}
-                  strokeDasharray={isSelected ? '4 2' : 'none'}
-                  opacity={isSelected ? 0.7 : 0.4}
+              <g
+                key={obj.id}
+                transform={`translate(${pos.x}, ${pos.y})`}
+                onClick={() => {
+                  sound.playSelect();
+                  setSelectedObjectId(obj.id);
+                }}
+                className="cursor-pointer group"
+              >
+                {/* Generous touch / mouse click target */}
+                <circle r={Math.max(30, (obj.size || 20) + 14)} fill="transparent" />
+
+                {/* Detailed Procedural Celestial Graphic */}
+                <CelestialBodyGraphic
+                  obj={obj}
+                  sunAngle={pos.sunAngle}
+                  isSelected={isSelected}
+                  isLanded={isLanded}
                 />
-
-                {/* Target Body Group */}
-                <g
-                  transform={`translate(${x}, ${y})`}
-                  onClick={() => {
-                    sound.playSelect();
-                    setSelectedObjectId(obj.id);
-                  }}
-                  className="cursor-pointer group"
-                >
-                  <circle r={32} fill="transparent" />
-
-                  {/* Selected Reticle */}
-                  {isSelected && (
-                    <g className="animate-spin" style={{ animationDuration: '8s' }}>
-                      <circle
-                        r={obj.size + 12}
-                        fill="none"
-                        stroke="#38bdf8"
-                        strokeWidth={1.5}
-                        strokeDasharray="4 4"
-                      />
-                      <line x1={-(obj.size + 16)} y1={0} x2={-(obj.size + 8)} y2={0} stroke="#38bdf8" strokeWidth={2} />
-                      <line x1={obj.size + 8} y1={0} x2={obj.size + 16} y2={0} stroke="#38bdf8" strokeWidth={2} />
-                      <line x1={0} y1={-(obj.size + 16)} x2={0} y2={-(obj.size + 8)} stroke="#38bdf8" strokeWidth={2} />
-                      <line x1={0} y1={obj.size + 8} x2={0} y2={obj.size + 16} stroke="#38bdf8" strokeWidth={2} />
-                    </g>
-                  )}
-
-                  {/* Landed indicator icon */}
-                  {isLanded && (
-                    <g transform={`translate(0, ${-(obj.size + 16)})`}>
-                      <circle r={7} fill="#10b981" />
-                      <polygon points="-3,-1 0,3 3,-1" fill="#ffffff" />
-                    </g>
-                  )}
-
-                  {/* Atmosphere Glow */}
-                  {obj.atmosphereColor && (
-                    <circle
-                      r={obj.size * 1.25}
-                      fill={obj.atmosphereColor}
-                      opacity={0.3}
-                      filter="blur(2px)"
-                    />
-                  )}
-
-                  {/* Rings if applicable */}
-                  {obj.rings && (
-                    <ellipse
-                      rx={obj.size * 2.2}
-                      ry={obj.size * 0.7}
-                      fill="none"
-                      stroke="#cbd5e1"
-                      strokeWidth={3}
-                      opacity={0.7}
-                      transform="rotate(-25)"
-                    />
-                  )}
-
-                  {/* Body Circle */}
-                  <circle
-                    r={obj.size}
-                    fill={obj.color}
-                    stroke={isSelected ? '#38bdf8' : '#334155'}
-                    strokeWidth={isSelected ? 2 : 1}
-                    className="transition-transform group-hover:scale-110"
-                  />
-
-                  {/* Name Label */}
-                  <text
-                    y={obj.size + 16}
-                    textAnchor="middle"
-                    className={`text-[11px] font-display font-semibold tracking-wider uppercase pointer-events-none ${
-                      isSelected ? 'fill-cyan-300 drop-shadow-[0_0_6px_rgba(6,182,212,0.8)]' : 'fill-slate-300'
-                    }`}
-                  >
-                    {obj.name}
-                  </text>
-
-                  {/* Subtitle */}
-                  <text
-                    y={obj.size + 27}
-                    textAnchor="middle"
-                    className="text-[9px] font-mono fill-slate-400 capitalize pointer-events-none"
-                  >
-                    {obj.type}
-                  </text>
-                </g>
               </g>
             );
           })}
@@ -386,194 +366,159 @@ export const SystemView: React.FC<SystemViewProps> = ({
             ← Return to Orbital Radar
           </button>
 
-          {/* Target Header with Share Button */}
-          <div className="flex items-start justify-between pb-3 border-b border-slate-800 gap-2">
-            <div>
-              <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-slate-400">
-                <Target className="w-3 h-3 text-cyan-400" />
-                <span>Selected Celestial Body</span>
-              </div>
-              <h2 className="text-xl font-display font-bold text-cyan-300 uppercase tracking-wide">
-                {selectedObject?.name || 'Uncharted Body'}
-              </h2>
+          {/* Target Header */}
+          <div className="pb-3 border-b border-slate-700/80">
+            <div className="flex items-center gap-1.5 text-xs font-mono uppercase text-cyan-300 font-bold">
+              <Target className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Selected Celestial Body</span>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleQuickCopy}
-                className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded text-slate-300 cursor-pointer"
-                title="Copy body info to clipboard"
-              >
-                {quickCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-cyan-400" />}
-              </button>
-              <button
-                onClick={() => {
-                  sound.playClick(600);
-                  setIsShareModalOpen(true);
-                }}
-                className="p-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 rounded text-cyan-300 cursor-pointer"
-                title="Open Complete Galactic Directory"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <h2 className="text-xl sm:text-2xl font-display font-black text-slate-100 uppercase tracking-wide">
+              {selectedObject?.name || 'Uncharted Body'}
+            </h2>
           </div>
 
-          {/* Visual Artwork Thumbnail */}
-          <div className="relative rounded-lg overflow-hidden border border-slate-800 h-44 bg-black group shadow-xl">
+          {/* Visual Artwork Thumbnail - clean without original ev art text badge */}
+          <div className="relative rounded-xl overflow-hidden border-2 border-slate-700 h-44 sm:h-48 bg-black group shadow-xl">
             <img
               src={getStellarObjectImage(selectedObject)}
               alt={selectedObject?.name}
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover md:object-contain object-center group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent pointer-events-none" />
-            <div className="absolute top-2 left-2 bg-slate-950/90 border border-cyan-500/50 px-2 py-0.5 rounded text-[9px] font-mono text-cyan-300 uppercase tracking-widest flex items-center gap-1 shadow-lg backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              <span>Original EV Landing Art</span>
-            </div>
-            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-200 font-semibold">{selectedObject?.name}</span>
-              <span className="text-emerald-400 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Port Cleared
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent pointer-events-none" />
+            <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs font-mono">
+              <span className="text-slate-100 font-bold text-sm sm:text-base">{selectedObject?.name}</span>
+              <span className="text-emerald-300 flex items-center gap-1.5 font-bold">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Port Cleared
               </span>
             </div>
           </div>
 
-          {/* Target Specifications Grid */}
-          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-            <div className="bg-slate-900/60 border border-slate-800/80 p-2.5 rounded">
-              <span className="text-slate-400 block text-[10px]">JURISDICTION</span>
-              <span className="text-cyan-300 font-medium">{system.faction}</span>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800/80 p-2.5 rounded">
-              <span className="text-slate-400 block text-[10px]">SECURITY LEVEL</span>
-              <span className="text-amber-300 font-medium">{system.security} Protocol</span>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800/80 p-2.5 rounded">
-              <span className="text-slate-400 block text-[10px]">TECH TIER</span>
-              <span className="text-slate-200 font-medium">Level {system.techLevel} Facilities</span>
-            </div>
-            <div className="bg-slate-900/60 border border-slate-800/80 p-2.5 rounded">
-              <span className="text-slate-400 block text-[10px]">STATUS</span>
-              <span className="text-emerald-400 font-medium">Inhabited Port</span>
-            </div>
-          </div>
-
-          {/* Planetary Description Lore */}
-          <div className="bg-slate-900/40 border border-slate-800/60 p-3 rounded text-xs text-slate-300 leading-relaxed font-sans">
+          {/* Planetary Description Lore (at top above the docking button right below artwork) */}
+          <div className="ev-panel-inset p-3.5 rounded-lg text-xs sm:text-sm text-slate-100 leading-relaxed font-sans shadow-inner border border-slate-800/80">
             {selectedObject?.description}
           </div>
 
-          {/* Available Landing Facilities on This Specific Planet */}
-          <div>
-            <div className="flex items-center justify-between mb-2 text-[11px] font-mono text-slate-400">
-              <span className="uppercase tracking-wider">Operational Facilities:</span>
-              <span className="text-cyan-400 font-semibold">{selectedObject?.name}</span>
+          {/* Featured Prominent Dock Action Button at Top */}
+          <div className="space-y-1.5 pt-1">
+            {player.landedObjectId === selectedObject?.id ? (
+              <button
+                onClick={() => {
+                  sound.playLanding();
+                  onLandOnObject(selectedObject);
+                }}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 font-display font-black tracking-wider text-sm sm:text-base uppercase rounded-xl flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-emerald-950/60 transition-all border border-emerald-400/50"
+              >
+                <Anchor className="w-5 h-5 text-slate-950" />
+                <span>Enter {selectedObject?.name} Spaceport</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sound.playLanding();
+                  onLandOnObject(selectedObject);
+                }}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-cyan-600 via-cyan-500 to-sky-500 hover:from-cyan-500 hover:to-sky-400 text-slate-950 font-display font-black tracking-wider text-sm sm:text-base uppercase rounded-xl flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-cyan-950/60 transition-all border border-cyan-300/60"
+              >
+                <Anchor className="w-5 h-5 text-slate-950" />
+                <span>Dock at {selectedObject?.name}</span>
+              </button>
+            )}
+            <div className="text-center text-[11px] font-mono text-slate-400">
+              Docking guidance authorized by {system.faction} Port Traffic Control
             </div>
-            <div className="grid grid-cols-3 gap-1.5 text-[11px] font-mono">
+          </div>
+
+          {/* Available Landing Facilities on This Specific Planet (above specifications) */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-300 font-bold">
+              <span className="uppercase tracking-wider">Operational Facilities:</span>
+              <span className="text-cyan-300">{selectedObject?.name}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs font-mono">
               {/* Bar */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-semibold ${
                 selectedObject?.facilities.spaceportBar
-                  ? 'bg-slate-900/80 border-amber-500/40 text-amber-300'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-amber-950/80 border-amber-500/50 text-amber-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Wine className="w-3 h-3 text-amber-400" />
+                <Wine className="w-3.5 h-3.5 text-amber-400" />
                 <span>Bar</span>
               </div>
 
               {/* Commodities */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-semibold ${
                 selectedObject?.facilities.commodityExchange
-                  ? 'bg-slate-900/80 border-emerald-500/40 text-emerald-300'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Store className="w-3 h-3 text-emerald-400" />
+                <Store className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Market</span>
               </div>
 
               {/* Shipyard */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-bold ${
                 selectedObject?.facilities.shipyard
-                  ? 'bg-slate-900/80 border-cyan-500/40 text-cyan-300 font-bold'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-cyan-950/80 border-cyan-500/50 text-cyan-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Wrench className="w-3 h-3 text-cyan-400" />
+                <Wrench className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Shipyard</span>
               </div>
 
               {/* Outfitter */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-semibold ${
                 selectedObject?.facilities.outfitter
-                  ? 'bg-slate-900/80 border-purple-500/40 text-purple-300'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-purple-950/80 border-purple-500/50 text-purple-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Radio className="w-3 h-3 text-purple-400" />
+                <Radio className="w-3.5 h-3.5 text-purple-400" />
                 <span>Outfitter</span>
               </div>
 
               {/* Jobs */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-semibold ${
                 selectedObject?.facilities.missionComputer
-                  ? 'bg-slate-900/80 border-blue-500/40 text-blue-300'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-blue-950/80 border-blue-500/50 text-blue-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Briefcase className="w-3 h-3 text-blue-400" />
+                <Briefcase className="w-3.5 h-3.5 text-blue-400" />
                 <span>Jobs</span>
               </div>
 
               {/* Bank */}
-              <div className={`flex items-center gap-1.5 border px-2 py-1.5 rounded ${
+              <div className={`flex items-center gap-1.5 border px-2.5 py-2 rounded-lg font-semibold ${
                 selectedObject?.facilities.bank
-                  ? 'bg-slate-900/80 border-amber-500/40 text-amber-300'
-                  : 'bg-slate-950 text-slate-600 border-slate-900 line-through'
+                  ? 'bg-amber-950/80 border-amber-500/50 text-amber-300'
+                  : 'bg-black text-slate-600 border-slate-900 line-through'
               }`}>
-                <Landmark className="w-3 h-3 text-amber-300" />
+                <Landmark className="w-3.5 h-3.5 text-amber-300" />
                 <span>Bank</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Primary Landing Action Button */}
-        <div className="pt-4 border-t border-slate-800 mt-4 space-y-2">
-          {player.landedObjectId === selectedObject?.id ? (
-            <button
-              onClick={() => {
-                sound.playLanding();
-                onLandOnObject(selectedObject);
-              }}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 font-display font-bold text-sm rounded shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Anchor className="w-4 h-4" />
-              <span>Enter {selectedObject?.name} Spaceport</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                sound.playLanding();
-                onLandOnObject(selectedObject);
-              }}
-              className="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-display font-bold text-sm rounded shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Anchor className="w-4 h-4" />
-              <span>Initiate Landing / Dock at {selectedObject?.name}</span>
-            </button>
-          )}
-
-          <div className="text-center text-[10px] font-mono text-slate-500">
-            Docking guidance authorized by {system.faction} Port Traffic Control
+          {/* Target Specifications Grid (below facilities) */}
+          <div className="grid grid-cols-2 gap-2.5 text-xs font-mono pt-1">
+            <div className="ev-panel-inset p-3 rounded-lg space-y-0.5">
+              <span className="text-slate-400 block text-xs font-bold uppercase">JURISDICTION</span>
+              <span className="text-cyan-300 font-bold text-sm">{system.faction}</span>
+            </div>
+            <div className="ev-panel-inset p-3 rounded-lg space-y-0.5">
+              <span className="text-slate-400 block text-xs font-bold uppercase">SECURITY LEVEL</span>
+              <span className="text-amber-300 font-bold text-sm">{system.security} Protocol</span>
+            </div>
+            <div className="ev-panel-inset p-3 rounded-lg space-y-0.5">
+              <span className="text-slate-400 block text-xs font-bold uppercase">TECH TIER</span>
+              <span className="text-slate-200 font-semibold text-sm">Level {system.techLevel} Facilities</span>
+            </div>
+            <div className="ev-panel-inset p-3 rounded-lg space-y-0.5">
+              <span className="text-slate-400 block text-xs font-bold uppercase">STATUS</span>
+              <span className="text-emerald-300 font-bold text-sm">Inhabited Port</span>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Share Dossier Modal */}
-      <ShareDossierModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        system={system}
-        landedObject={selectedObject}
-        onAppendNotes={onAppendNotes}
-      />
     </div>
   );
 };

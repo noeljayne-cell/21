@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { StellarObject, StarSystem, PlayerState, OutfitItem } from '../types/game';
 import { OUTFITS } from '../data/galaxyData';
 import { sound } from '../audio/soundFx';
-import { Radio, Crosshair, Shield, Zap, Package, Trash2, Plus, Sparkles, Check } from 'lucide-react';
+import { Radio, Crosshair, Shield, Zap, Package, Trash2, Plus, Sparkles, Check, Wrench } from 'lucide-react';
+import { SectionEditButton } from './SectionEditButton';
 
 interface OutfitterProps {
   planet: StellarObject;
@@ -49,35 +50,40 @@ export const Outfitter: React.FC<OutfitterProps> = ({
   const canMount = hasFreeGunSlot && hasFreeTurretSlot && hasFreeMass && canAfford;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
       {/* Header Slot Diagnostic */}
-      <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-lg flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+      <div className="ev-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 text-xs font-mono shadow-lg">
         <div>
-          <span className="text-[10px] text-slate-400 uppercase block">SHIP OUTFITTER FACILITY</span>
-          <span className="text-base font-display font-bold text-slate-100">
-            {planet.name} Hardware Bay (Tier {system.techLevel})
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider block font-bold">
+              SHIP OUTFITTER FACILITY // TIER {system.techLevel} TECH
+            </span>
+            <SectionEditButton label="Edit Facility" />
+          </div>
+          <span className="text-lg sm:text-xl font-display font-black text-slate-100 uppercase tracking-wide">
+            {planet.name} Hardware Bay &amp; Gantries
           </span>
         </div>
 
         {/* Diagnostic hardpoint badges */}
         <div className="flex items-center gap-3">
-          <div className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800">
-            <span className="text-slate-400 text-[10px] block">GUN SLOTS</span>
-            <span className={`font-bold tabular-nums ${usedGunSlots >= maxGunSlots ? 'text-amber-400' : 'text-slate-200'}`}>
+          <div className="ev-panel-inset px-3 py-2 rounded-lg text-center">
+            <span className="text-slate-400 text-xs block font-bold uppercase">GUN SLOTS</span>
+            <span className={`font-black text-sm tabular-nums ${usedGunSlots >= maxGunSlots ? 'text-amber-400' : 'text-slate-100'}`}>
               {usedGunSlots} / {maxGunSlots}
             </span>
           </div>
 
-          <div className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800">
-            <span className="text-slate-400 text-[10px] block">TURRET SLOTS</span>
-            <span className={`font-bold tabular-nums ${usedTurretSlots >= maxTurretSlots ? 'text-amber-400' : 'text-slate-200'}`}>
+          <div className="ev-panel-inset px-3 py-2 rounded-lg text-center">
+            <span className="text-slate-400 text-xs block font-bold uppercase">TURRET SLOTS</span>
+            <span className={`font-black text-sm tabular-nums ${usedTurretSlots >= maxTurretSlots ? 'text-amber-400' : 'text-slate-100'}`}>
               {usedTurretSlots} / {maxTurretSlots}
             </span>
           </div>
 
-          <div className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800">
-            <span className="text-slate-400 text-[10px] block">OUTFIT MASS</span>
-            <span className={`font-bold tabular-nums ${usedMass >= maxMass ? 'text-rose-400' : 'text-cyan-300'}`}>
+          <div className="ev-panel-inset px-3 py-2 rounded-lg text-center">
+            <span className="text-slate-400 text-xs block font-bold uppercase">OUTFIT MASS</span>
+            <span className={`font-black text-sm tabular-nums ${usedMass >= maxMass ? 'text-rose-400' : 'text-cyan-300'}`}>
               {usedMass} / {maxMass} t
             </span>
           </div>
@@ -85,7 +91,7 @@ export const Outfitter: React.FC<OutfitterProps> = ({
       </div>
 
       {/* Category Filter Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 text-xs font-mono">
         {['all', 'weapon', 'turret', 'shield', 'engine', 'cargo', 'special'].map((cat) => (
           <button
             key={cat}
@@ -93,10 +99,10 @@ export const Outfitter: React.FC<OutfitterProps> = ({
               sound.playClick(600);
               setSelectedCategory(cat);
             }}
-            className={`px-3 py-1.5 rounded capitalize whitespace-nowrap cursor-pointer transition-colors ${
+            className={`px-3.5 py-2 rounded-lg capitalize whitespace-nowrap cursor-pointer transition-all font-bold ${
               selectedCategory === cat
-                ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/40'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'ev-btn-cyan text-white shadow-md'
+                : 'ev-btn text-slate-300 hover:text-white'
             }`}
           >
             {cat === 'all' ? 'All Hardware' : cat}
@@ -105,15 +111,18 @@ export const Outfitter: React.FC<OutfitterProps> = ({
       </div>
 
       {/* Main Grid: Outfits for Sale & Currently Equipped */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Available Hardware (6 cols) */}
-        <div className="lg:col-span-6 bg-slate-900/60 border border-slate-800 rounded-lg overflow-hidden">
-          <div className="p-3 bg-slate-900/90 border-b border-slate-800 text-xs font-mono text-slate-400 flex items-center justify-between">
-            <span>AVAILABLE MODULES</span>
+        <div className="lg:col-span-6 ev-panel rounded-xl overflow-hidden shadow-xl">
+          <div className="p-3 bg-slate-900 border-b border-slate-700 text-xs font-mono text-slate-300 font-bold uppercase tracking-wider flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span>AVAILABLE MODULES ({availableOutfits.length})</span>
+              <SectionEditButton label="Edit Catalog" />
+            </div>
             <span>PRICE / TECH</span>
           </div>
 
-          <div className="divide-y divide-slate-800/60 max-h-[360px] overflow-y-auto no-scrollbar">
+          <div className="divide-y divide-slate-800/80 max-h-[420px] overflow-y-auto no-scrollbar">
             {availableOutfits.map((outfit) => {
               const isSelected = selectedOutfitId === outfit.id;
 
@@ -124,15 +133,15 @@ export const Outfitter: React.FC<OutfitterProps> = ({
                     sound.playSelect();
                     setSelectedOutfitId(outfit.id);
                   }}
-                  className={`p-3 cursor-pointer transition-colors text-xs font-mono flex items-center justify-between gap-3 ${
+                  className={`p-3.5 cursor-pointer transition-colors text-xs font-mono flex items-center justify-between gap-3 ${
                     isSelected
-                      ? 'bg-cyan-950/40 border-l-2 border-cyan-400'
-                      : 'hover:bg-slate-800/50'
+                      ? 'bg-cyan-950/60 border-l-4 border-cyan-400 shadow-inner'
+                      : 'hover:bg-slate-900/60'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     {outfit.image && (
-                      <div className="w-10 h-10 rounded bg-black/80 border border-slate-800 flex items-center justify-center p-0.5 shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-black border border-slate-700 flex items-center justify-center p-1 shrink-0">
                         <img
                           src={outfit.image}
                           alt={outfit.name}
@@ -144,21 +153,21 @@ export const Outfitter: React.FC<OutfitterProps> = ({
                       </div>
                     )}
                     <div className="space-y-0.5 min-w-0">
-                      <span className={`font-semibold block truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
+                      <span className={`font-bold text-sm block truncate ${isSelected ? 'text-cyan-300' : 'text-slate-100'}`}>
                         {outfit.name}
                       </span>
-                      <span className="text-[10px] text-slate-400 capitalize truncate block">
+                      <span className="text-xs text-slate-400 capitalize truncate block">
                         {outfit.slotType} slot · {outfit.mass}t mass
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="font-bold text-amber-400 tabular-nums block">
+                    <span className="font-black text-amber-400 tabular-nums block text-sm sm:text-base">
                       {outfit.cost.toLocaleString()} Cr
                     </span>
-                    <span className="text-[10px] text-slate-400">
-                      Tier {outfit.techLevel}
+                    <span className="text-xs text-slate-400 font-semibold">
+                      Tier {outfit.techLevel} Tech
                     </span>
                   </div>
                 </div>
@@ -170,46 +179,49 @@ export const Outfitter: React.FC<OutfitterProps> = ({
         {/* Right: Selected Detail & Currently Mounted List (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
           {/* Selected Item Detail */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-3.5 space-y-3">
-            <div className="flex items-start justify-between border-b border-slate-800 pb-2">
+          <div className="ev-panel rounded-xl p-4 sm:p-5 space-y-3.5 shadow-xl">
+            <div className="flex items-start justify-between border-b border-slate-700/80 pb-3">
               <div>
-                <span className="text-[10px] font-mono uppercase text-slate-400 block">HARDWARE SPECIFICATION</span>
-                <h4 className="text-base font-display font-bold text-cyan-300 uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase text-cyan-400 block font-bold tracking-wider">HARDWARE SPECIFICATION</span>
+                  <SectionEditButton label="Edit Specs" />
+                </div>
+                <h4 className="text-lg sm:text-xl font-display font-black text-slate-100 uppercase">
                   {selectedOutfit.name}
                 </h4>
               </div>
-              <span className="text-base font-mono font-bold text-amber-400 tabular-nums">
+              <span className="text-lg sm:text-xl font-mono font-black text-amber-400 tabular-nums">
                 {selectedOutfit.cost.toLocaleString()} Cr
               </span>
             </div>
 
             {/* Original Escape Velocity Hardware Artwork */}
             {selectedOutfit.image && (
-              <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-black/90 p-3 flex items-center justify-center min-h-[96px]">
+              <div className="relative rounded-xl overflow-hidden border border-slate-700 ev-panel-inset p-4 flex items-center justify-center min-h-[110px]">
                 <img
                   src={selectedOutfit.image}
                   alt={selectedOutfit.name}
-                  className="max-h-20 max-w-[120px] object-contain drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]"
+                  className="max-h-24 max-w-[140px] object-contain drop-shadow-[0_0_12px_rgba(34,211,238,0.35)]"
                 />
-                <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-[9px] font-mono text-slate-400 uppercase tracking-wider">
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded bg-black/85 border border-cyan-500/50 text-xs font-mono text-cyan-300 uppercase tracking-wider font-semibold">
                   Original EV Hardware Art
                 </div>
               </div>
             )}
 
-            <p className="text-xs text-slate-300 font-sans leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed ev-panel-inset p-3.5 rounded-lg">
               {selectedOutfit.description}
             </p>
 
-            <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-                Slot: <strong className="capitalize">{selectedOutfit.slotType}</strong>
+            <div className="flex items-center gap-2.5 text-xs font-mono flex-wrap">
+              <span className="px-3 py-1 rounded ev-panel-inset text-slate-200">
+                Mount: <strong className="capitalize text-cyan-300">{selectedOutfit.slotType}</strong>
               </span>
-              <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-                Mass: <strong>{selectedOutfit.mass} t</strong>
+              <span className="px-3 py-1 rounded ev-panel-inset text-slate-200">
+                Mass: <strong className="text-amber-300">{selectedOutfit.mass} t</strong>
               </span>
-              <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400">
-                Tech: <strong>Tier {selectedOutfit.techLevel}</strong>
+              <span className="px-3 py-1 rounded ev-panel-inset text-slate-200">
+                Technology: <strong className="text-emerald-400">Tier {selectedOutfit.techLevel}</strong>
               </span>
             </div>
 
@@ -224,20 +236,20 @@ export const Outfitter: React.FC<OutfitterProps> = ({
                 }
               }}
               disabled={!canMount}
-              className={`w-full py-2.5 font-display font-semibold text-xs rounded transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`w-full py-3.5 font-display font-black text-sm uppercase rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 canMount
-                  ? 'bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  ? 'ev-btn-cyan shadow-xl'
+                  : 'ev-btn opacity-50 text-slate-400 cursor-not-allowed'
               }`}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span>
                 {!canAfford
                   ? 'Insufficient Credits'
                   : !hasFreeGunSlot
-                  ? 'Gun Slots Full'
+                  ? 'Gun Hardpoints Full'
                   : !hasFreeTurretSlot
-                  ? 'Turret Slots Full'
+                  ? 'Turret Mounts Full'
                   : !hasFreeMass
                   ? 'Exceeds Vessel Mass Limit'
                   : `Purchase & Mount (${selectedOutfit.cost.toLocaleString()} Cr)`}
@@ -246,44 +258,47 @@ export const Outfitter: React.FC<OutfitterProps> = ({
           </div>
 
           {/* Currently Mounted Hardware on Vessel */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-800 pb-1.5">
-              <span>MOUNTED HARDWARE ({player.equippedOutfits.length})</span>
-              <span className="text-[10px]">SELL REFUND: 90%</span>
+          <div className="ev-panel rounded-xl p-4 space-y-2.5 shadow-md">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-300 border-b border-slate-700/80 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-bold uppercase tracking-wider">MOUNTED HARDWARE ({player.equippedOutfits.length})</span>
+                <SectionEditButton label="Edit List" />
+              </div>
+              <span className="text-xs text-amber-300 font-semibold">SELL REFUND: 90%</span>
             </div>
 
             {player.equippedOutfits.length === 0 ? (
-              <div className="py-4 text-center text-xs font-mono text-slate-500">
-                No custom outfits installed. Standard stock configuration.
+              <div className="py-4 text-center text-xs sm:text-sm font-mono text-slate-400">
+                No custom outfits installed. Standard factory stock configuration.
               </div>
             ) : (
-              <div className="space-y-1.5 max-h-[160px] overflow-y-auto no-scrollbar">
+              <div className="space-y-2 max-h-[180px] overflow-y-auto no-scrollbar">
                 {player.equippedOutfits.map((outfit, index) => {
                   const refund = Math.round(outfit.cost * 0.9);
 
                   return (
                     <div
                       key={`${outfit.id}-${index}`}
-                      className="bg-slate-950/80 border border-slate-800 p-2 rounded flex items-center justify-between text-xs font-mono"
+                      className="ev-panel-inset p-2.5 rounded-lg flex items-center justify-between text-xs font-mono"
                     >
-                      <div className="space-y-0.5">
-                        <span className="text-slate-200 font-semibold block">{outfit.name}</span>
-                        <span className="text-[10px] text-slate-400 capitalize">
+                      <div className="space-y-0.5 min-w-0 pr-2">
+                        <span className="text-slate-100 font-bold block truncate">{outfit.name}</span>
+                        <span className="text-xs text-slate-400 capitalize">
                           {outfit.slotType} · {outfit.mass}t
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-amber-300 tabular-nums">+{refund} Cr</span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-emerald-400 font-bold tabular-nums">+{refund.toLocaleString()} Cr</span>
                         <button
                           onClick={() => {
                             sound.playCredit();
                             onSellOutfit(index);
                           }}
-                          className="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded transition-colors cursor-pointer"
+                          className="ev-btn p-1.5 text-rose-300 hover:text-white"
                           title="Sell Outfit"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
